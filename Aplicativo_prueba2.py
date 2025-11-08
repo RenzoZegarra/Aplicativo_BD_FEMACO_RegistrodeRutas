@@ -1,0 +1,225 @@
+import tkinter as tk
+from tkinter import messagebox
+import mysql.connector
+
+# --------------------------
+# Función: Conectar a la base
+# --------------------------
+def conectar_bd():
+    try:
+        global conexion, cursor
+        conexion = mysql.connector.connect(
+            user='root',
+            password='root',
+            host='localhost',
+            database='femaco_registro_de_rutas',
+            port='3306'
+        )
+        if conexion.is_connected():
+            messagebox.showinfo("Conexión", "Conectado correctamente a la base de datos")
+            cursor = conexion.cursor()
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo conectar:\n{e}")
+
+# --------------------------
+# FUNCIONES DE CONSULTAS
+# --------------------------
+
+#Función consulta de mostrar conductores
+def mostrar_conductores():
+    try:
+        cursor.execute("SELECT * FROM conductor")
+        registros = cursor.fetchall()
+        texto.delete("1.0", tk.END)  # Limpia el texto anterior
+        for fila in registros:
+            texto.insert(tk.END, str(fila) + "\n")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo obtener datos:\n{e}")
+
+
+#Función Consulta 1: Vehículos que tienen conductor asignado.
+def mostrar_Vehiculos_con_conductor():
+    try:
+        cursor.execute("SELECT v.placa, v.marca, v.tonelaje, c.nombre_conductor FROM Vehiculo v INNER JOIN Conductor c ON v.id_conductor = c.id_conductor")
+        registros = cursor.fetchall()
+        texto.delete("1.0", tk.END)
+        for fila in registros:
+            texto.insert(tk.END, str(fila) + "\n")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo obtener datos:\n{e}")
+        
+
+#Función Consulta 2: Rutas que están activas actualmente.
+def mostrar_rutas_activas():
+    try:
+        cursor.execute("SELECT id_ruta, descripcion, tipo_ruta, kilometraje FROM Ruta WHERE estado_ruta = 1")
+        registros = cursor.fetchall()
+        texto.delete("1.0", tk.END)  # Limpia el texto anterior
+        for fila in registros:
+            texto.insert(tk.END, str(fila) + "\n")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo obtener datos:\n{e}")
+
+#Función Consulta 3: Descripción de las rutas y cuántos detalles tiene cada una.
+def mostrar_detalles_rutas():
+    try:
+        cursor.execute("SELECT r.descripcion, COUNT(d.id_detalle) AS cantidad_detalles FROM Ruta r LEFT JOIN Detalle d ON r.id_ruta = d.id_ruta GROUP BY r.id_ruta, r.descripcion")
+        registros = cursor.fetchall()
+        texto.delete("1.0", tk.END)  # Limpia el texto anterior
+        for fila in registros:
+            texto.insert(tk.END, str(fila) + "\n")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo obtener datos:\n{e}")
+
+#Función Consulta 4: Las 3 rutas con mejor rendimiento
+def mostrar_rutas_con_mejor_rendimiento():
+    try:
+        cursor.execute("SELECT r.descripcion, r.kilometraje, ROUND(AVG(d.consumo_por_modelo), 2) AS consumo_promedio, ROUND(r.kilometraje / AVG(d.consumo_por_modelo), 2) AS rendimiento FROM Ruta r INNER JOIN Detalle d ON r.id_ruta = d.id_ruta GROUP BY r.id_ruta, r.descripcion, r.kilometraje ORDER BY rendimiento DESC LIMIT 3")
+        registros = cursor.fetchall()
+        texto.delete("1.0", tk.END)  # Limpia el texto anterior
+        for fila in registros:
+            texto.insert(tk.END, str(fila) + "\n")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo obtener datos:\n{e}")
+
+#Función Consulta 5
+def mostrar_vehiculos_modelo():
+    try:
+        cursor.execute("SELECT v.placa, v.marca, m.modelo_descripcion, v.centro_costos FROM Vehiculo v INNER JOIN Modelo m ON v.id_modelo = m.id_modelo;")
+        registros = cursor.fetchall()
+        texto.delete("1.0", tk.END)
+        for fila in registros:
+            texto.insert(tk.END, str(fila) + "\n")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo obtener datos:\n{e}")
+
+
+#Función Consulta 6
+def mostrar_modelos_mas_usados():
+    try:
+        cursor.execute("SELECT m.modelo_descripcion, COUNT(v.placa) AS cantidad_vehiculos FROM Modelo m LEFT JOIN Vehiculo v ON m.id_modelo = v.id_modelo GROUP BY m.id_modelo, m.modelo_descripcion ORDER BY cantidad_vehiculos DESC;")
+        registros = cursor.fetchall()
+        texto.delete("1.0", tk.END)
+        for fila in registros:
+            texto.insert(tk.END, str(fila) + "\n")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo obtener datos:\n{e}")
+
+
+#Función Consulta 7
+def mostrar_consumo_promedio_modelos():
+    try:
+        cursor.execute("SELECT m.modelo_descripcion, ROUND(AVG(d.consumo_por_modelo), 2) AS consumo_promedio FROM Modelo m INNER JOIN Detalle d ON m.id_modelo = d.id_modelo GROUP BY m.id_modelo, m.modelo_descripcion ORDER BY consumo_promedio ASC;")
+        registros = cursor.fetchall()
+        texto.delete("1.0", tk.END)
+        for fila in registros:
+            texto.insert(tk.END, str(fila) + "\n")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo obtener datos:\n{e}")
+
+
+#Función Consulta 8
+def mostrar_vehiculos_pesados():
+    try:
+        cursor.execute("SELECT placa, marca, tonelaje, centro_costos FROM Vehiculo WHERE tonelaje > 8;")
+        registros = cursor.fetchall()
+        texto.delete("1.0", tk.END)
+        for fila in registros:
+            texto.insert(tk.END, str(fila) + "\n")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo obtener datos:\n{e}")
+
+
+#Función Consulta 9
+def mostrar_rutas_por_tipo():
+    try:
+        cursor.execute("SELECT tipo_ruta, COUNT(*) AS cantidad_rutas FROM Ruta GROUP BY tipo_ruta;")
+        registros = cursor.fetchall()
+        texto.delete("1.0", tk.END)
+        for fila in registros:
+            texto.insert(tk.END, str(fila) + "\n")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo obtener datos:\n{e}")
+
+
+#Función Consulta 10
+def mostrar_rutas_inactivas():
+    try:
+        cursor.execute("SELECT id_ruta, descripcion, tipo_ruta, kilometraje FROM Ruta WHERE estado_ruta = 0;")
+        registros = cursor.fetchall()
+        texto.delete("1.0", tk.END)
+        for fila in registros:
+            texto.insert(tk.END, str(fila) + "\n")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo obtener datos:\n{e}")
+
+
+#Función Consulta 11
+def mostrar_vehiculos_por_modelo():
+    try:
+        cursor.execute("SELECT v.id_modelo, COUNT(*) AS cantidad FROM Vehiculo v GROUP BY v.id_modelo;")
+        registros = cursor.fetchall()
+        texto.delete("1.0", tk.END)
+        for fila in registros:
+            texto.insert(tk.END, str(fila) + "\n")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo obtener datos:\n{e}")
+
+
+#Función Consulta 12
+def buscar_modelo_especifico():
+    try:
+        cursor.execute("SELECT * FROM Modelo WHERE id_modelo = 10;")
+        registros = cursor.fetchall()
+        texto.delete("1.0", tk.END)
+        for fila in registros:
+            texto.insert(tk.END, str(fila) + "\n")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo obtener datos:\n{e}")
+
+
+
+# --------------------------
+# Función: Cerrar conexión
+# --------------------------
+def cerrar_conexion():
+    try:
+        if conexion.is_connected():
+            cursor.close()
+            conexion.close()
+            messagebox.showinfo("Conexión", "Conexión cerrada correctamente")
+    except:
+        pass
+
+# --------------------------
+# Interfaz gráfica
+# --------------------------
+ventana = tk.Tk()
+ventana.title("Registro de Conductores")
+ventana.geometry("400x300")
+
+# Botones
+btn_conectar = tk.Button(ventana, text="Conectar a BD", command=conectar_bd, bg="#4CAF50", fg="white")
+btn_conectar.pack(pady=5)
+
+btn_mostrar = tk.Button(ventana, text="Mostrar Conductores", command=mostrar_conductores, bg="#2196F3", fg="white")
+btn_mostrar.pack(pady=5)
+
+
+
+btn_consulta1 = tk.Button(ventana, text="Mostrar vehículos con conductor asignado", command=mostrar_Vehiculos_con_conductor, bg="#36f4ab", fg="white")
+btn_consulta1.pack(pady=5)
+
+
+
+btn_cerrar = tk.Button(ventana, text="Cerrar Conexión", command=cerrar_conexion, bg="#f44336", fg="white")
+btn_cerrar.pack(pady=5)
+
+
+
+# Cuadro de texto para mostrar resultados
+texto = tk.Text(ventana, height=10, width=45)
+texto.pack(pady=10)
+
+# Ejecutar ventana
+ventana.mainloop()
