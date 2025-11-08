@@ -196,11 +196,48 @@ def cerrar_conexion():
 # --------------------------
 ventana = tk.Tk()
 ventana.title("Registro de Conductores")
-ventana.geometry("400x300")
+ventana.state("zoomed")
+ventana.config(bg="#E8CB79")
+
+
+# ----------------------
+# Cabecera
+# ----------------------
+cabecera = tk.Label(
+    ventana,
+    text="FEMACO: Registro de Rutas",
+    bg="green",        # mismo fondo que la ventana
+    fg="white",        # color del texto
+    font=("Arial", 30, "bold")  # fuente grande y negrita
+)
+cabecera.pack(fill="x", ipady=20)  # separa la cabecera del resto de elementos
+
+
+
 
 # Botones
-btn_conectar = tk.Button(ventana, text="Conectar a BD", command=conectar_bd, bg="#4CAF50", fg="white")
+# Título 1: GESTIONAR BD
+titulo = tk.Label(
+    ventana,
+    text="Gestionar Base de Datos",  
+    fg="black",        # color del texto
+    font=("Arial", 24, "bold")  
+)
+titulo.pack(pady=10)  # separa del resto de widgets
+
+
+btn_conectar = tk.Button(ventana, text="Conectar a BD", command=conectar_bd, bg="#4CAF50", fg="white", width=50, height=5, font=("Arial", 16, "bold"))
 btn_conectar.pack(pady=5)
+
+# Título 2: MOSTRAR BD
+titulo = tk.Label(
+    ventana,
+    text="Mostrar Base de Datos",  
+    fg="black",        # color del texto
+    font=("Arial", 24, "bold")  
+)
+titulo.pack(pady=10)  # separa del resto de widgets
+
 
 btn_mostrar = tk.Button(ventana, text="Mostrar Conductores", command=mostrar_conductores, bg="#2196F3", fg="white")
 btn_mostrar.pack(pady=5)
@@ -210,7 +247,14 @@ btn_mostrar.pack(pady=5)
 btn_consulta1 = tk.Button(ventana, text="Mostrar vehículos con conductor asignado", command=mostrar_Vehiculos_con_conductor, bg="#36f4ab", fg="white")
 btn_consulta1.pack(pady=5)
 
-
+# Título 3: GENERAR REPORTES
+titulo = tk.Label(
+    ventana,
+    text="Generar Reportes de la BD",  
+    fg="black",        # color del texto
+    font=("Arial", 24, "bold")  
+)
+titulo.pack(pady=10)  # separa del resto de widgets
 
 btn_cerrar = tk.Button(ventana, text="Cerrar Conexión", command=cerrar_conexion, bg="#f44336", fg="white")
 btn_cerrar.pack(pady=5)
