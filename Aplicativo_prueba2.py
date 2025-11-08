@@ -226,7 +226,7 @@ titulo = tk.Label(
 titulo.pack(pady=10)  # separa del resto de widgets
 
 
-btn_conectar = tk.Button(ventana, text="Conectar a BD", command=conectar_bd, bg="#4CAF50", fg="white", width=50, height=5, font=("Arial", 16, "bold"))
+btn_conectar = tk.Button(ventana, text="Conectar a BD", command=conectar_bd, bg="#4CAF50", fg="white")
 btn_conectar.pack(pady=5)
 
 # Título 2: MOSTRAR BD
@@ -239,14 +239,6 @@ titulo = tk.Label(
 titulo.pack(pady=10)  # separa del resto de widgets
 
 
-btn_mostrar = tk.Button(ventana, text="Mostrar Conductores", command=mostrar_conductores, bg="#2196F3", fg="white")
-btn_mostrar.pack(pady=5)
-
-
-
-btn_consulta1 = tk.Button(ventana, text="Mostrar vehículos con conductor asignado", command=mostrar_Vehiculos_con_conductor, bg="#36f4ab", fg="white")
-btn_consulta1.pack(pady=5)
-
 # Título 3: GENERAR REPORTES
 titulo = tk.Label(
     ventana,
@@ -256,13 +248,50 @@ titulo = tk.Label(
 )
 titulo.pack(pady=10)  # separa del resto de widgets
 
+btn_consulta1 = tk.Button(ventana, text="Mostrar vehículos con conductor asignado", command=mostrar_Vehiculos_con_conductor, bg="#36f4ab", fg="white")
+btn_consulta1.pack(pady=5)
+
+btn_consulta2 = tk.Button(ventana, text="Mostrar las rutas activas", command=mostrar_rutas_activas, bg="#e32813", fg="white")
+btn_consulta2.pack(pady=5)
+
+btn_consulta3 = tk.Button(ventana, text="Mostrar detalles de las rutas", command=mostrar_detalles_rutas, bg="#e32813", fg="white")
+btn_consulta3.pack(pady=5)
+
+btn_consulta4 = tk.Button(ventana, text="Mostrar las 3 rutas con el mejor rendimiento", command=mostrar_rutas_con_mejor_rendimiento, bg="#e32813", fg="white")
+btn_consulta4.pack(pady=5)
+
+btn_consulta5 = tk.Button(ventana, text="Mostrar los vehículos con su modelo y centro de costos.", command=mostrar_vehiculos_modelo, bg="#e32813", fg="white")
+btn_consulta5.pack(pady=5)
+
+btn_consulta6 = tk.Button(ventana, text="Mostrar los modelos más usados por vehículos.", command=mostrar_modelos_mas_usados, bg="#e32813", fg="white")
+btn_consulta6.pack(pady=5)
+
+btn_consulta7 = tk.Button(ventana, text="Mostrar el consumo promedio por modelo en todas las rutas", command=mostrar_consumo_promedio_modelos, bg="#e32813", fg="white")
+btn_consulta7.pack(pady=5)
+
+btn_consulta8 = tk.Button(ventana, text="Mostrar los vehículos con tonelaje superior a 8 toneladas", command=mostrar_vehiculos_pesados, bg="#e32813", fg="white")
+btn_consulta8.pack(pady=5)
+
+btn_consulta9 = tk.Button(ventana, text="Mostrar las rutas por tipo(local o provincial) con cantidad total", command=mostrar_rutas_por_tipo, bg="#e32813", fg="white")
+btn_consulta9.pack(pady=5)
+
+btn_consulta10 = tk.Button(ventana, text="Mostrar las rutas inactivas", command=mostrar_rutas_inactivas, bg="#e32813", fg="white")
+btn_consulta10.pack(pady=5)
+
+btn_consulta11 = tk.Button(ventana, text="Mostrar los vehículos agrupados por modelo.", command=mostrar_vehiculos_por_modelo, bg="#e32813", fg="white")
+btn_consulta11.pack(pady=5)
+
+btn_consulta12 = tk.Button(ventana, text="Buscar un modelo específico.", command=buscar_modelo_especifico, bg="#e32813", fg="white")
+btn_consulta12.pack(pady=5)
+
+
 btn_cerrar = tk.Button(ventana, text="Cerrar Conexión", command=cerrar_conexion, bg="#f44336", fg="white")
 btn_cerrar.pack(pady=5)
 
 
 
 # Cuadro de texto para mostrar resultados
-texto = tk.Text(ventana, height=10, width=45)
+texto = tk.Text(ventana, height=10, width=80)
 texto.pack(pady=10)
 
 # Ejecutar ventana
