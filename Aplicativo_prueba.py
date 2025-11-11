@@ -82,7 +82,7 @@ def mostrar_rutas_con_mejor_rendimiento():
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo obtener datos:\n{e}")
 
-#Función Consulta 5
+#Función Consulta 5: 
 def mostrar_vehiculos_modelo():
     try:
         cursor.execute("SELECT v.placa, v.marca, m.modelo_descripcion, v.centro_costos FROM Vehiculo v INNER JOIN Modelo m ON v.id_modelo = m.id_modelo;")
@@ -196,29 +196,104 @@ def cerrar_conexion():
 # --------------------------
 ventana = tk.Tk()
 ventana.title("Registro de Conductores")
-ventana.geometry("400x300")
+ventana.state("zoomed")
+ventana.config(bg="#E8CB79")
 
-# Botones
-btn_conectar = tk.Button(ventana, text="Conectar a BD", command=conectar_bd, bg="#4CAF50", fg="white")
+# --------------------------
+# CONTENEDOR CON SCROLLBAR
+# --------------------------
+# Canvas que contendrá el frame desplazable
+canvas = tk.Canvas(ventana, bg="#E8CB79", highlightthickness=0)
+canvas.pack(side="left", fill="both", expand=True)
+
+# Scrollbar vertical
+scrollbar = tk.Scrollbar(ventana, orient="vertical", command=canvas.yview)
+scrollbar.pack(side="right", fill="y")
+
+# Configurar el canvas para usar la scrollbar
+canvas.configure(yscrollcommand=scrollbar.set)
+
+# Frame dentro del canvas (donde pondremos los botones, labels, etc.)
+frame_contenido = tk.Frame(canvas, bg="#E8CB79")
+canvas.create_window((0, 0), window=frame_contenido, anchor="nw")
+
+# Actualizar el área de scroll cuando cambia el tamaño
+def actualizar_scroll(event):
+    canvas.configure(scrollregion=canvas.bbox("all"))
+
+frame_contenido.bind("<Configure>", actualizar_scroll)
+
+# Permitir scroll con la rueda del ratón
+def scroll_con_rueda(event):
+    canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+canvas.bind_all("<MouseWheel>", scroll_con_rueda)
+
+
+# ----------------------
+# Cabecera
+# ----------------------
+cabecera = tk.Label(
+    frame_contenido,
+    text="FEMACO: Registro de Rutas",
+    bg="green",
+    fg="white",
+    font=("Arial", 30, "bold")
+)
+cabecera.pack(fill="x", ipady=20)
+
+# ----------------------
+# Botones y secciones
+# ----------------------
+
+# Título 1: GESTIONAR BD
+titulo = tk.Label(
+    frame_contenido,
+    text="Gestionar Base de Datos",
+    fg="black",
+    font=("Arial", 24, "bold"),
+    bg="#E8CB79"
+)
+titulo.pack(pady=10)
+
+btn_conectar = tk.Button(frame_contenido, text="Conectar a BD", bg="#4CAF50", fg="white")
 btn_conectar.pack(pady=5)
 
-btn_mostrar = tk.Button(ventana, text="Mostrar Conductores", command=mostrar_conductores, bg="#2196F3", fg="white")
-btn_mostrar.pack(pady=5)
+# Título 2: MOSTRAR BD
+titulo = tk.Label(
+    frame_contenido,
+    text="Mostrar Base de Datos",
+    fg="black",
+    font=("Arial", 24, "bold"),
+    bg="#E8CB79"
+)
+titulo.pack(pady=10)
 
+# Título 3: GENERAR REPORTES
+titulo = tk.Label(
+    frame_contenido,
+    text="Generar Reportes de la BD",
+    fg="black",
+    font=("Arial", 24, "bold"),
+    bg="#E8CB79"
+)
+titulo.pack(pady=10)
 
+# Ejemplo de botones de consulta
+for i in range(1, 13):
+    tk.Button(
+        frame_contenido,
+        text=f"Consulta {i}",
+        bg="#e32813",
+        fg="white"
+    ).pack(pady=5)
 
-btn_consulta1 = tk.Button(ventana, text="Mostrar vehículos con conductor asignado", command=mostrar_Vehiculos_con_conductor, bg="#36f4ab", fg="white")
-btn_consulta1.pack(pady=5)
-
-
-
-btn_cerrar = tk.Button(ventana, text="Cerrar Conexión", command=cerrar_conexion, bg="#f44336", fg="white")
-btn_cerrar.pack(pady=5)
-
-
+# Botón de cerrar conexión
+btn_cerrar = tk.Button(frame_contenido, text="Cerrar Conexión", bg="#f44336", fg="white")
+btn_cerrar.pack(pady=10)
 
 # Cuadro de texto para mostrar resultados
-texto = tk.Text(ventana, height=10, width=45)
+texto = tk.Text(frame_contenido, height=10, width=80)
 texto.pack(pady=10)
 
 # Ejecutar ventana

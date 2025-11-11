@@ -2,9 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import mysql.connector
 
-# --------------------------
 # Función: Conectar a la base
-# --------------------------
 def conectar_bd():
     try:
         global conexion, cursor
@@ -198,6 +196,7 @@ ventana = tk.Tk()
 ventana.title("Registro de Conductores")
 ventana.state("zoomed")
 ventana.config(bg="#E8CB79")
+
 
 
 # ----------------------
