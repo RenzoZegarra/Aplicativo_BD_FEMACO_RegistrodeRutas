@@ -44,8 +44,135 @@ def ejecutar_consulta(sql):
         messagebox.showerror("Error", f"No se pudo obtener datos:\n{e}")
 
 # --------------------------
-# FUNCIONES DE CONSULTAS (12)
+# CRUDS
 # --------------------------
+# CREATE: Inserciones
+def insertar_conductor():
+    try:
+        nombre = entry_nombre_conductor.get()
+        if not (nombre, ):
+            messagebox.showwarning("Campos vacíos", "Complete todos los campos.")
+            return
+
+        sql = "INSERT INTO Conductor (nombre_conductor) VALUES (%s)"
+        cursor.execute(sql, (nombre))
+        conexion.commit()
+        messagebox.showinfo("Éxito", "Conductor agregado correctamente.")
+        entry_nombre_conductor.delete(0, tk.END)
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo insertar:\n{e}")
+
+
+
+
+def insertar_vehiculo():
+    try:
+        placa = entry_placa.get()
+        marca = entry_marca.get()
+        tonelaje = entry_tonelaje.get()
+        id_conductor = entry_id_conductor.get()
+        id_modelo = entry_id_modelo.get()
+        centro_costos = entry_centro_costos.get()
+
+        if not (placa and id_conductor and id_modelo and marca and tonelaje and centro_costos):
+            messagebox.showwarning("Campos vacíos", "Complete todos los campos obligatorios.")
+            return
+
+        sql = "INSERT INTO Vehiculo (placa, id_conductor, id_modelo, marca, tonelaje, centro_costos) VALUES (%s, %s, %s, %s, %s, %s)"
+        cursor.execute(sql, (placa, id_conductor, id_modelo, marca, tonelaje, centro_costos))
+        conexion.commit()
+        messagebox.showinfo("Éxito", "Vehículo agregado correctamente.")
+        for e in [entry_placa, entry_id_conductor, entry_id_modelo, entry_marca, entry_tonelaje, entry_centro_costos]:
+            e.delete(0, tk.END)
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo insertar:\n{e}")
+
+def insertar_ruta():
+    try:
+        descripcion = entry_descripcion_ruta.get()
+        tipo = entry_tipo_ruta.get()
+        kilometraje = entry_kilometraje.get()
+        estado = entry_estado_ruta.get()
+
+        if not (kilometraje and tipo and descripcion and estado):
+            messagebox.showwarning("Campos vacíos", "Complete todos los campos obligatorios.")
+            return
+
+        sql = "INSERT INTO Ruta (kilometraje, tipo_ruta, descripcion, estado_ruta) VALUES (%s, %s, %s, %s)"
+        cursor.execute(sql, (kilometraje, tipo, descripcion, estado))
+        conexion.commit()
+        messagebox.showinfo("Éxito", "Ruta agregada correctamente.")
+        for e in [entry_kilometraje, entry_tipo_ruta, entry_descripcion_ruta, entry_estado_ruta]:
+            e.delete(0, tk.END)
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo insertar:\n{e}")
+
+def insertar_modelo():
+    try:
+        descripcion_modelo = entry_modelo_descripcion.get().strip()
+
+        # Validación
+        if not descripcion_modelo:
+            messagebox.showwarning("Campos vacíos", "Ingrese una descripción válida.")
+            return
+
+        # Consulta SQL
+        sql = "INSERT INTO Modelo (modelo_descripcion) VALUES (%s)"
+        cursor.execute(sql, (descripcion_modelo,))  # tupla correcta
+        conexion.commit()
+
+        messagebox.showinfo("Éxito", "Modelo agregado correctamente.")
+        entry_modelo_descripcion.delete(0, tk.END)
+
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo insertar el modelo:\n{e}")
+
+
+def insertar_detalle():
+    try:
+        ruta = entry_id_ruta.get().strip()
+        modelo = entry_id_modelo.get().strip()
+        consumo = entry_consumo_por_modelo.get().strip()
+
+        # Validaciones
+        if not ruta or not modelo or not consumo:
+            messagebox.showwarning("Campos vacíos", "Complete todos los campos.")
+            return
+
+        if not ruta.isdigit() or not modelo.isdigit():
+            messagebox.showwarning("Valor inválido", "ID Ruta y ID Modelo deben ser números enteros.")
+            return
+
+        # Validar decimal
+        try:
+            consumo_val = float(consumo)
+        except ValueError:
+            messagebox.showwarning("Valor inválido", "El consumo debe ser un número decimal válido.")
+            return
+
+        # Consulta SQL
+        sql = """
+            INSERT INTO Detalle (id_ruta, id_modelo, consumo_por_modelo)
+            VALUES (%s, %s, %s)
+        """
+        cursor.execute(sql, (int(ruta), int(modelo), consumo_val))
+        conexion.commit()
+
+        messagebox.showinfo("Éxito", "Detalle agregado correctamente.")
+
+        # Limpiar campos
+        entry_id_ruta.delete(0, tk.END)
+        entry_id_modelo.delete(0, tk.END)
+        entry_consumo_por_modelo.delete(0, tk.END)
+
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo insertar el detalle:\n{e}")
+
+
+
+
+#READ: Consultas
+
 def consulta_vehiculos_con_conductor():
     ejecutar_consulta("SELECT v.placa, v.marca, v.tonelaje, c.nombre_conductor FROM Vehiculo v INNER JOIN Conductor c ON v.id_conductor = c.id_conductor;")
 
@@ -82,70 +209,53 @@ def consulta_vehiculos_por_modelo():
 def consulta_modelo_especifico():
     ejecutar_consulta("SELECT * FROM Modelo WHERE id_modelo = 10;")
 
-# --------------------------
-# FUNCIONES DE INSERCIÓN
-# --------------------------
-def insertar_conductor():
-    try:
-        nombre = entry_nombre_conductor.get()
-        licencia = entry_licencia_conductor.get()
-        telefono = entry_telefono_conductor.get()
+#UPDATE
 
-        if not (nombre and licencia and telefono):
-            messagebox.showwarning("Campos vacíos", "Complete todos los campos.")
+
+#DELETE: Borrados lógicos
+def eliminar_detalle():
+    try:
+        id_detalle = entry_id_detalle.get().strip()
+
+        # Validación
+        if not id_detalle:
+            messagebox.showwarning("Campo vacío", "Ingrese el ID del detalle a eliminar.")
             return
 
-        sql = "INSERT INTO Conductor (nombre_conductor, licencia, telefono) VALUES (%s, %s, %s)"
-        cursor.execute(sql, (nombre, licencia, telefono))
-        conexion.commit()
-        messagebox.showinfo("Éxito", "Conductor agregado correctamente.")
-        entry_nombre_conductor.delete(0, tk.END)
-        entry_licencia_conductor.delete(0, tk.END)
-        entry_telefono_conductor.delete(0, tk.END)
-    except Exception as e:
-        messagebox.showerror("Error", f"No se pudo insertar:\n{e}")
-
-def insertar_vehiculo():
-    try:
-        placa = entry_placa.get()
-        marca = entry_marca.get()
-        tonelaje = entry_tonelaje.get()
-        id_conductor = entry_id_conductor.get()
-        id_modelo = entry_id_modelo.get()
-        centro_costos = entry_centro_costos.get()
-
-        if not (placa and marca and tonelaje and id_conductor and id_modelo):
-            messagebox.showwarning("Campos vacíos", "Complete todos los campos obligatorios.")
+        if not id_detalle.isdigit():
+            messagebox.showwarning("Valor inválido", "El ID debe ser un número entero.")
             return
 
-        sql = "INSERT INTO Vehiculo (placa, marca, tonelaje, id_conductor, id_modelo, centro_costos) VALUES (%s, %s, %s, %s, %s, %s)"
-        cursor.execute(sql, (placa, marca, tonelaje, id_conductor, id_modelo, centro_costos))
-        conexion.commit()
-        messagebox.showinfo("Éxito", "Vehículo agregado correctamente.")
-        for e in [entry_placa, entry_marca, entry_tonelaje, entry_id_conductor, entry_id_modelo, entry_centro_costos]:
-            e.delete(0, tk.END)
-    except Exception as e:
-        messagebox.showerror("Error", f"No se pudo insertar:\n{e}")
+        id_detalle = int(id_detalle)
 
-def insertar_ruta():
-    try:
-        descripcion = entry_descripcion_ruta.get()
-        tipo = entry_tipo_ruta.get()
-        kilometraje = entry_kilometraje.get()
-        estado = entry_estado_ruta.get()
+        # Verificar si existe
+        sql_verificar = "SELECT * FROM Detalle WHERE id_detalle = %s"
+        cursor.execute(sql_verificar, (id_detalle,))
+        registro = cursor.fetchone()
 
-        if not (descripcion and tipo and kilometraje):
-            messagebox.showwarning("Campos vacíos", "Complete todos los campos obligatorios.")
+        if not registro:
+            messagebox.showwarning("No encontrado", "No existe un registro con ese ID.")
             return
 
-        sql = "INSERT INTO Ruta (descripcion, tipo_ruta, kilometraje, estado_ruta) VALUES (%s, %s, %s, %s)"
-        cursor.execute(sql, (descripcion, tipo, kilometraje, estado))
+        # Confirmación
+        confirmar = messagebox.askyesno("Confirmar", f"¿Desea eliminar el registro ID {id_detalle}?")
+        if not confirmar:
+            return
+
+        # Eliminar
+        sql_delete = "DELETE FROM Detalle WHERE id_detalle = %s"
+        cursor.execute(sql_delete, (id_detalle,))
         conexion.commit()
-        messagebox.showinfo("Éxito", "Ruta agregada correctamente.")
-        for e in [entry_descripcion_ruta, entry_tipo_ruta, entry_kilometraje, entry_estado_ruta]:
-            e.delete(0, tk.END)
+
+        messagebox.showinfo("Éxito", "Registro eliminado correctamente.")
+        entry_id_detalle.delete(0, tk.END)
+
     except Exception as e:
-        messagebox.showerror("Error", f"No se pudo insertar:\n{e}")
+        messagebox.showerror("Error", f"No se pudo eliminar:\n{e}")
+
+
+
+
 
 # --------------------------
 # INTERFAZ GRÁFICA
