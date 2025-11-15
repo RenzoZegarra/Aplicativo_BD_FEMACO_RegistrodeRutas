@@ -70,6 +70,47 @@ CREATE TABLE IF NOT EXISTS Historial_Conductor (
     fecha_eliminacion DATETIME
 );
 
+-- Historial ruta
+CREATE TABLE IF NOT EXISTS Historial_ruta (
+    id_historial_2 INT AUTO_INCREMENT PRIMARY KEY,
+    id_ruta INT,
+    kilometraje INT,
+    tipo_ruta VARCHAR(20),
+    descripcion VARCHAR(100),
+    estado_ruta BOOLEAN,
+    fecha_eliminacion DATETIME
+);
+
+-- Historial vehiculo
+CREATE TABLE IF NOT EXISTS Historial_Conductor (
+    id_historial_3 INT AUTO_INCREMENT PRIMARY KEY,
+    placa VARCHAR(10),
+    id_conductor INT,
+    id_modelo INT,
+    marca VARCHAR(50),
+    tonelaje INT,
+    centro_costos VARCHAR(50),
+    fecha_eliminacion DATETIME
+);
+
+-- Historial detalle
+CREATE TABLE IF NOT EXISTS historial_detalle (
+    id_historial_4 INT AUTO_INCREMENT PRIMARY KEY,
+    id_detalle INT PRIMARY KEY,
+    id_ruta INT,
+    id_modelo INT,
+    consumo_por_modelo DECIMAL(5,2)
+)
+
+-- Historial modelo
+CREATE TABLE IF NOT EXISTS historial_modelo (
+    id_historial_5 INT AUTO_INCREMENT PRIMARY KEY,
+    id_modelo INT PRIMARY KEY AUTO_INCREMENT,
+    modelo_descripcion VARCHAR(100),
+    fecha_eliminacion DATETIME
+)
+
+
 --3.2 Trigger BEFORE DELETE
 --Registra la información antes de eliminar.
 
