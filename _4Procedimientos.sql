@@ -184,7 +184,7 @@ CREATE TRIGGER tr_log_vehiculo_eliminado
 BEFORE DELETE ON Vehiculo
 FOR EACH ROW
 BEGIN
-    INSERT INTO Historial_Conductor (
+    INSERT INTO Historial_vehiculo (
         placa,
         id_conductor,
         id_modelo,

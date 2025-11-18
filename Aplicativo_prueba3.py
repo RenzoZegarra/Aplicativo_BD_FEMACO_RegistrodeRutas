@@ -419,290 +419,663 @@ def eliminar_vehiculo():
 
 
 
-# --------------------------
-# INTERFAZ GRÁFICA
-# --------------------------
+# ============================
+#     INTERFAZ GRÁFICA
+# ============================
 ventana = tk.Tk()
-ventana.title("FEMACO: Registro de Rutas")
+ventana.title("FEMACO • Administrador de Base de Datos")
 ventana.state("zoomed")
-ventana.config(bg="#E8CB79")
+ventana.config(bg="#f5f3ed")  # Fondo suave y limpio
 
-# Notebook (pestañas)
+# --------------------------
+#     ESTILOS MODERNOS
+# --------------------------
+style = ttk.Style()
+style.theme_use("clam")
+
+# Estilo para las pestañas
+style.configure("TNotebook", background="#f5f3ed", borderwidth=0)
+style.configure("TNotebook.Tab",
+                font=("Segoe UI", 12, "bold"),
+                padding=[15, 8],
+                background="#d9d4c7")
+style.map("TNotebook.Tab",
+          background=[("selected", "#b89c5d")],
+          foreground=[("selected", "white")])
+
+# Estilo de botones
+boton_estilo = {
+    "font": ("Segoe UI", 12, "bold"),
+    "bd": 0,
+    "relief": "flat",
+    "cursor": "hand2",
+    "fg": "white",
+    "width": 18,
+    "height": 2
+}
+
+# Notebook
 notebook = ttk.Notebook(ventana)
-notebook.pack(fill="both", expand=True, padx=10, pady=10)
+notebook.pack(fill="both", expand=True, padx=15, pady=15)
 
-# === Pestaña de Conexión ===
-frame_conexion = tk.Frame(notebook, bg="#F7E7A8")
-notebook.add(frame_conexion, text="Conexión")
+# =======================================
+#          PESTAÑA 1: CONEXIÓN
+# =======================================
+frame_conexion = tk.Frame(notebook, bg="#faf7ef")
+notebook.add(frame_conexion, text="🔌 Conexión")
 
-tk.Label(frame_conexion, text="Gestión de Conexión", bg="#F7E7A8", font=("Arial", 20, "bold")).pack(pady=20)
-tk.Button(frame_conexion, text="Conectar a BD", command=conectar_bd, bg="#4CAF50", fg="white", font=("Arial", 14)).pack(pady=10)
-tk.Button(frame_conexion, text="Cerrar Conexión", command=cerrar_conexion, bg="#f44336", fg="white", font=("Arial", 14)).pack(pady=10)
+tk.Label(
+    frame_conexion,
+    text="Panel de Gestión de Conexión",
+    bg="#faf7ef",
+    fg="#6c4f2d",
+    font=("Segoe UI", 24, "bold")
+).pack(pady=40)
 
-# === Pestaña de Consultas ===
-frame_consultas = tk.Frame(notebook, bg="#F7E7A8")
-notebook.add(frame_consultas, text="Consultas")
+tk.Button(
+    frame_conexion,
+    text="Conectar Base de Datos",
+    command=conectar_bd,
+    bg="#4b8f2f",
+    **boton_estilo
+).pack(pady=20)
 
-frame_botones = tk.Frame(frame_consultas, bg="#F7E7A8")
-frame_botones.pack(side="left", fill="y", padx=10, pady=10)
+tk.Button(
+    frame_conexion,
+    text="Cerrar Conexión",
+    command=cerrar_conexion,
+    bg="#c0392b",
+    **boton_estilo
+).pack(pady=20)
 
-frame_texto = tk.Frame(frame_consultas)
-frame_texto.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+# =======================================
+# PIE DE PÁGINA CORPORATIVO
+# =======================================
+footer = tk.Label(
+    ventana,
+    text="FEMACO © 2025  •  Sistema de Gestión de Rutas y Bases de Datos",
+    bg="#f5f3ed",
+    fg="#8b7e6b",
+    font=("Segoe UI", 8)
+)
+footer.pack(side="bottom", pady=1)
 
-scroll = tk.Scrollbar(frame_texto)
-scroll.pack(side="right", fill="y")
 
-texto_resultados = tk.Text(frame_texto, wrap="none", yscrollcommand=scroll.set, font=("Consolas", 12))
-texto_resultados.pack(fill="both", expand=True)
-scroll.config(command=texto_resultados.yview)
+# =======================================
+#          PESTAÑA DE CONSULTAS
+# =======================================
 
-# Botones de consulta
+frame_consultas = tk.Frame(notebook, bg="#f0ebe1")
+notebook.add(frame_consultas, text="📊 Consultar Datos")
+
+# ==== Panel Izquierdo (Menú de Consultas) ====
+menu_consultas = tk.Frame(frame_consultas, bg="#d6c7a1", width=280)
+menu_consultas.pack(side="left", fill="y")
+menu_consultas.pack_propagate(False)
+
+tk.Label(
+    menu_consultas,
+    text="Consultas Disponibles",
+    bg="#d6c7a1",
+    fg="#3d2f1c",
+    font=("Segoe UI", 16, "bold")
+).pack(pady=20)
+
+# ==== Estilo para los botones del menú ====
+estilo_menu = {
+    "font": ("Segoe UI", 11, "bold"),
+    "bg": "#8e793e",
+    "fg": "white",
+    "activebackground": "#b89c5d",
+    "activeforeground": "white",
+    "relief": "flat",
+    "bd": 0,
+    "cursor": "hand2",
+    "anchor": "w",
+    "padx": 15,
+    "width": 30
+}
+
 consultas = [
-    ("TODAS LAS RUTAS", consulta_ruta),
-    ("TODOS LOS DETALLES", consulta_detalle),
-    ("TODOS LOS MODELOS", consulta_modelo),
-    ("TODOS LOS VEHICULOS", consulta_vehiculo),
-    ("TODOS LOS CONDUCTORES", consulta_conductor), 
-    ("Vehículos con conductor asignado", consulta_vehiculos_con_conductor),
-    ("Rutas activas", consulta_rutas_activas),
-    ("Detalles de rutas", consulta_detalles_rutas),
-    ("Top 3 rutas con mejor rendimiento", consulta_top_rendimiento),
-    ("Vehículos y su modelo", consulta_vehiculos_modelo),
-    ("Modelos más usados", consulta_modelos_usados),
-    ("Consumo promedio por modelo", consulta_consumo_promedio),
-    ("Vehículos pesados", consulta_vehiculos_pesados),
-    ("Rutas por tipo", consulta_rutas_tipo),
-    ("Rutas inactivas", consulta_rutas_inactivas),
-    ("Vehículos por modelo", consulta_vehiculos_por_modelo),
-    ("Buscar modelo específico", consulta_modelo_especifico)
+    ("📌 Todas las rutas", consulta_ruta),
+    ("📌 Todos los detalles", consulta_detalle),
+    ("📌 Todos los modelos", consulta_modelo),
+    ("📌 Todos los vehículos", consulta_vehiculo),
+    ("📌 Todos los conductores", consulta_conductor),
+    ("🚗 Vehículos con conductor asignado", consulta_vehiculos_con_conductor),
+    ("🛣️ Rutas activas", consulta_rutas_activas),
+    ("📋 Detalles de rutas", consulta_detalles_rutas),
+    ("🏆 Top 3 rutas por rendimiento", consulta_top_rendimiento),
+    ("🚘 Vehículos y su modelo", consulta_vehiculos_modelo),
+    ("🔥 Modelos más usados", consulta_modelos_usados),
+    ("⛽ Consumo promedio por modelo", consulta_consumo_promedio),
+    ("🚛 Vehículos pesados", consulta_vehiculos_pesados),
+    ("🗂️ Rutas por tipo", consulta_rutas_tipo),
+    ("⛔ Rutas inactivas", consulta_rutas_inactivas),
+    ("🚙 Vehículos por modelo", consulta_vehiculos_por_modelo),
+    ("🔍 Buscar modelo específico", consulta_modelo_especifico)
 ]
 
 for texto, func in consultas:
-    tk.Button(frame_botones, text=texto, command=func, bg="#1976D2", fg="white", width=35).pack(pady=2)
+    tk.Button(menu_consultas, text=texto, command=func, **estilo_menu).pack(pady=3)
 
-# === Pestaña de Inserción ===
-frame_insertar = tk.Frame(notebook, bg="#F7E7A8")
-notebook.add(frame_insertar, text="Insertar Datos")
+# ===== Línea decorativa debajo del menú =====
+tk.Frame(menu_consultas, bg="#b09b6d", height=2).pack(fill="x", padx=10, pady=15)
 
-# Subpestañas para insertar
-tabs_insertar = ttk.Notebook(frame_insertar)
-tabs_insertar.pack(fill="both", expand=True, padx=10, pady=10)
-
-# --- Insertar Conductor ---
-frame_conductor = tk.Frame(tabs_insertar, bg="#FFFBEA")
-tabs_insertar.add(frame_conductor, text="Conductor")
-
-tk.Label(frame_conductor, text="Agregar Conductor", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
-tk.Label(frame_conductor, text="Nombre:", bg="#FFFBEA").pack()
-entry_nombre_conductor = tk.Entry(frame_conductor)
-entry_nombre_conductor.pack()
-tk.Button(frame_conductor, text="Guardar Conductor", bg="#4CAF50", fg="white", command=insertar_conductor).pack(pady=10)
-
-# --- Insertar Vehículo ---
-frame_vehiculo = tk.Frame(tabs_insertar, bg="#FFFBEA")
-tabs_insertar.add(frame_vehiculo, text="Vehículo")
-
-tk.Label(frame_vehiculo, text="Agregar Vehículo", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
-campos_vehiculo = [("Placa:", 'placa'), ("Marca:", 'marca'), ("Tonelaje:", 'tonelaje'),
-                   ("ID Conductor:", 'id_conductor'), ("ID Modelo:", 'id_modelo'), ("Centro Costos:", 'centro_costos')]
-entries = {}
-for texto, var in campos_vehiculo:
-    tk.Label(frame_vehiculo, text=texto, bg="#FFFBEA").pack()
-    entries[var] = tk.Entry(frame_vehiculo)
-    entries[var].pack()
-
-entry_placa = entries['placa']
-entry_marca = entries['marca']
-entry_tonelaje = entries['tonelaje']
-entry_id_conductor = entries['id_conductor']
-entry_id_modelo = entries['id_modelo']
-entry_centro_costos = entries['centro_costos']
-
-tk.Button(frame_vehiculo, text="Guardar Vehículo", bg="#4CAF50", fg="white", command=insertar_vehiculo).pack(pady=10)
-
-# --- Insertar Ruta ---
-frame_ruta = tk.Frame(tabs_insertar, bg="#FFFBEA")
-tabs_insertar.add(frame_ruta, text="Ruta")
-
-tk.Label(frame_ruta, text="Agregar Ruta", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
-tk.Label(frame_ruta, text="Descripción:", bg="#FFFBEA").pack()
-entry_descripcion_ruta = tk.Entry(frame_ruta)
-entry_descripcion_ruta.pack()
-tk.Label(frame_ruta, text="Tipo de ruta:", bg="#FFFBEA").pack()
-entry_tipo_ruta = tk.Entry(frame_ruta)
-entry_tipo_ruta.pack()
-tk.Label(frame_ruta, text="Kilometraje:", bg="#FFFBEA").pack()
-entry_kilometraje = tk.Entry(frame_ruta)
-entry_kilometraje.pack()
-tk.Label(frame_ruta, text="Estado (1=Activo, 0=Inactivo):", bg="#FFFBEA").pack()
-entry_estado_ruta = tk.Entry(frame_ruta)
-entry_estado_ruta.pack()
-tk.Button(frame_ruta, text="Guardar Ruta", bg="#4CAF50", fg="white", command=insertar_ruta).pack(pady=10)
-
-#--- Insertar Modelo ---
-frame_modelo = tk.Frame(tabs_insertar, bg="#FFFBEA")
-tabs_insertar.add(frame_modelo, text="Modelo")
-
-tk.Label(
-    frame_modelo,
-    text="Agregar Modelo",
-    font=("Arial", 18, "bold"),
-    bg="#FFFBEA"
+# ===== Botón de exportar =====
+tk.Button(
+    menu_consultas,
+    text="⬇ Exportar resultados",
+    command=lambda: print("Exportando..."),  # Reemplazar con tu función
+    font=("Segoe UI", 11, "bold"),
+    bg="#4b8f2f", fg="white",
+    activebackground="#60a542",
+    relief="flat", bd=0, cursor="hand2", width=28
 ).pack(pady=10)
 
+
+# =========================================================
+#              Panel derecho – Área de resultados
+# =========================================================
+
+contenedor_resultados = tk.Frame(frame_consultas, bg="#f0ebe1")
+contenedor_resultados.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+
+# Título dinámico
+titulo_resultados = tk.Label(
+    contenedor_resultados,
+    text="Resultados de la consulta",
+    bg="#f0ebe1",
+    fg="#3d2f1c",
+    font=("Segoe UI", 20, "bold"),
+    anchor="w"
+)
+titulo_resultados.pack(fill="x", pady=10)
+
+# Marco con borde elegante
+marco_texto = tk.Frame(contenedor_resultados, bg="#fff", bd=2, relief="groove")
+marco_texto.pack(fill="both", expand=True)
+
+scroll = tk.Scrollbar(marco_texto)
+scroll.pack(side="right", fill="y")
+
+texto_resultados = tk.Text(
+    marco_texto,
+    wrap="none",
+    yscrollcommand=scroll.set,
+    font=("Consolas", 12),
+    bg="#fafafa",
+    fg="#333"
+)
+texto_resultados.pack(fill="both", expand=True)
+scroll.config(command=texto_resultados.yview)
+
+# =======================================
+#          PESTAÑA DE INSERCIÓN
+# =======================================
+
+frame_insertar = tk.Frame(notebook, bg="#f0ebe1")
+notebook.add(frame_insertar, text="📝 Insertar Datos")
+
+# Subpestañas (Notebook interno)
+tabs_insertar = ttk.Notebook(frame_insertar)
+tabs_insertar.pack(fill="both", expand=True, padx=15, pady=15)
+
+# ---------------------------------------
+#  ESTILO GENERAL PARA FORMULARIOS
+# ---------------------------------------
+
+form_style_label = {
+    "bg": "#faf7ef",
+    "fg": "#4a3b22",
+    "font": ("Segoe UI", 11, "bold"),
+    "anchor": "w"
+}
+
+form_style_entry = {
+    "font": ("Segoe UI", 11),
+    "bd": 1
+}
+
+button_style = {
+    "font": ("Segoe UI", 12, "bold"),
+    "bg": "#4b8f2f",
+    "fg": "white",
+    "activebackground": "#60a542",
+    "relief": "flat",
+    "cursor": "hand2",
+    "width": 20,
+    "height": 2
+}
+
+
+# ===================================================
+#               --- INSERTAR CONDUCTOR ---
+# ===================================================
+
+frame_conductor = tk.Frame(tabs_insertar, bg="#faf7ef")
+tabs_insertar.add(frame_conductor, text="👤 Conductor")
+
+tk.Label(
+    frame_conductor,
+    text="Registro de Conductor",
+    bg="#faf7ef",
+    fg="#3d2f1c",
+    font=("Segoe UI", 20, "bold")
+).pack(pady=25)
+
+form_conductor = tk.Frame(frame_conductor, bg="#faf7ef")
+form_conductor.pack(pady=10)
+
+tk.Label(form_conductor, text="Nombre del Conductor:", **form_style_label).grid(row=0, column=0, pady=5, sticky="w")
+entry_nombre_conductor = tk.Entry(form_conductor, **form_style_entry)
+entry_nombre_conductor.grid(row=0, column=1, pady=5, padx=10)
+
+tk.Button(
+    frame_conductor,
+    text="Guardar Conductor",
+    command=insertar_conductor,
+    **button_style
+).pack(pady=15)
+
+
+# ===================================================
+#               --- INSERTAR VEHÍCULO ---
+# ===================================================
+
+frame_vehiculo = tk.Frame(tabs_insertar, bg="#faf7ef")
+tabs_insertar.add(frame_vehiculo, text="🚗 Vehículo")
+
+tk.Label(
+    frame_vehiculo,
+    text="Registro de Vehículo",
+    bg="#faf7ef",
+    fg="#3d2f1c",
+    font=("Segoe UI", 20, "bold")
+).pack(pady=25)
+
+form_vehiculo = tk.Frame(frame_vehiculo, bg="#faf7ef")
+form_vehiculo.pack(pady=10)
+
+campos_vehiculo = [
+    ("Placa:", "placa"),
+    ("Marca:", "marca"),
+    ("Tonelaje:", "tonelaje"),
+    ("ID Conductor:", "id_conductor"),
+    ("ID Modelo:", "id_modelo"),
+    ("Centro Costos:", "centro_costos")
+]
+
+entries = {}
+
+for i, (label, var) in enumerate(campos_vehiculo):
+    tk.Label(form_vehiculo, text=label, **form_style_label).grid(row=i, column=0, pady=5, sticky="w")
+    entries[var] = tk.Entry(form_vehiculo, **form_style_entry)
+    entries[var].grid(row=i, column=1, pady=5, padx=10)
+
+entry_placa = entries["placa"]
+entry_marca = entries["marca"]
+entry_tonelaje = entries["tonelaje"]
+entry_id_conductor = entries["id_conductor"]
+entry_id_modelo = entries["id_modelo"]
+entry_centro_costos = entries["centro_costos"]
+
+tk.Button(
+    frame_vehiculo,
+    text="Guardar Vehículo",
+    command=insertar_vehiculo,
+    **button_style
+).pack(pady=15)
+
+
+# ===================================================
+#                  --- INSERTAR RUTA ---
+# ===================================================
+
+frame_ruta = tk.Frame(tabs_insertar, bg="#faf7ef")
+tabs_insertar.add(frame_ruta, text="🛣️ Ruta")
+
+tk.Label(
+    frame_ruta,
+    text="Registro de Ruta",
+    bg="#faf7ef",
+    fg="#3d2f1c",
+    font=("Segoe UI", 20, "bold")
+).pack(pady=25)
+
+form_ruta = tk.Frame(frame_ruta, bg="#faf7ef")
+form_ruta.pack(pady=10)
+
+tk.Label(form_ruta, text="Descripción:", **form_style_label).grid(row=0, column=0, pady=5, sticky="w")
+entry_descripcion_ruta = tk.Entry(form_ruta, **form_style_entry)
+entry_descripcion_ruta.grid(row=0, column=1, pady=5, padx=10)
+
+tk.Label(form_ruta, text="Tipo de Ruta:", **form_style_label).grid(row=1, column=0, pady=5, sticky="w")
+entry_tipo_ruta = tk.Entry(form_ruta, **form_style_entry)
+entry_tipo_ruta.grid(row=1, column=1, pady=5, padx=10)
+
+tk.Label(form_ruta, text="Kilometraje:", **form_style_label).grid(row=2, column=0, pady=5, sticky="w")
+entry_kilometraje = tk.Entry(form_ruta, **form_style_entry)
+entry_kilometraje.grid(row=2, column=1, pady=5, padx=10)
+
+tk.Label(form_ruta, text="Estado (1=Activo, 0=Inactivo):", **form_style_label).grid(row=3, column=0, pady=5, sticky="w")
+entry_estado_ruta = tk.Entry(form_ruta, **form_style_entry)
+entry_estado_ruta.grid(row=3, column=1, pady=5, padx=10)
+
+tk.Button(
+    frame_ruta,
+    text="Guardar Ruta",
+    command=insertar_ruta,
+    **button_style
+).pack(pady=15)
+
+
+# ===================================================
+#                --- INSERTAR MODELO ---
+# ===================================================
+
+frame_modelo = tk.Frame(tabs_insertar, bg="#faf7ef")
+tabs_insertar.add(frame_modelo, text="📦 Modelo")
+
 tk.Label(
     frame_modelo,
-    text="Descripción del Modelo:",
-    bg="#FFFBEA"
-).pack()
+    text="Registro de Modelo",
+    bg="#faf7ef",
+    fg="#3d2f1c",
+    font=("Segoe UI", 20, "bold")
+).pack(pady=25)
 
-entry_modelo_descripcion = tk.Entry(frame_modelo)
-entry_modelo_descripcion.pack()
+form_modelo = tk.Frame(frame_modelo, bg="#faf7ef")
+form_modelo.pack(pady=10)
+
+tk.Label(form_modelo, text="Descripción del Modelo:", **form_style_label).grid(row=0, column=0, pady=5, sticky="w")
+entry_modelo_descripcion = tk.Entry(form_modelo, **form_style_entry)
+entry_modelo_descripcion.grid(row=0, column=1, pady=5, padx=10)
 
 tk.Button(
     frame_modelo,
     text="Guardar Modelo",
-    bg="#4CAF50",
-    fg="white",
-    command=insertar_modelo
-).pack(pady=10)
+    command=insertar_modelo,
+    **button_style
+).pack(pady=15)
 
-# --- Insertar Detalle ---
-frame_detalle = tk.Frame(tabs_insertar, bg="#FFFBEA")
-tabs_insertar.add(frame_detalle, text="Detalle")
+
+# ===================================================
+#                --- INSERTAR DETALLE ---
+# ===================================================
+
+frame_detalle = tk.Frame(tabs_insertar, bg="#faf7ef")
+tabs_insertar.add(frame_detalle, text="📑 Detalle")
 
 tk.Label(
     frame_detalle,
-    text="Agregar Detalle",
-    font=("Arial", 18, "bold"),
-    bg="#FFFBEA"
-).pack(pady=10)
+    text="Registro de Detalle",
+    bg="#faf7ef",
+    fg="#3d2f1c",
+    font=("Segoe UI", 20, "bold")
+).pack(pady=25)
 
-# ID Ruta
-tk.Label(frame_detalle, text="ID Ruta:", bg="#FFFBEA").pack()
-entry_id_ruta = tk.Entry(frame_detalle)
-entry_id_ruta.pack()
+form_detalle = tk.Frame(frame_detalle, bg="#faf7ef")
+form_detalle.pack(pady=10)
 
-# ID Modelo
-tk.Label(frame_detalle, text="ID Modelo:", bg="#FFFBEA").pack()
-entry_id_modelo = tk.Entry(frame_detalle)
-entry_id_modelo.pack()
+tk.Label(form_detalle, text="ID Ruta:", **form_style_label).grid(row=0, column=0, pady=5, sticky="w")
+entry_id_ruta = tk.Entry(form_detalle, **form_style_entry)
+entry_id_ruta.grid(row=0, column=1, pady=5, padx=10)
 
-# Consumo por Modelo
-tk.Label(frame_detalle, text="Consumo por Modelo:", bg="#FFFBEA").pack()
-entry_consumo_por_modelo = tk.Entry(frame_detalle)
-entry_consumo_por_modelo.pack()
+tk.Label(form_detalle, text="ID Modelo:", **form_style_label).grid(row=1, column=0, pady=5, sticky="w")
+entry_id_modelo = tk.Entry(form_detalle, **form_style_entry)
+entry_id_modelo.grid(row=1, column=1, pady=5, padx=10)
 
-# Botón Guardar
+tk.Label(form_detalle, text="Consumo por Modelo:", **form_style_label).grid(row=2, column=0, pady=5, sticky="w")
+entry_consumo_por_modelo = tk.Entry(form_detalle, **form_style_entry)
+entry_consumo_por_modelo.grid(row=2, column=1, pady=5, padx=10)
+
 tk.Button(
     frame_detalle,
     text="Guardar Detalle",
-    bg="#4CAF50",
-    fg="white",
-    command=insertar_detalle
-).pack(pady=10)
+    command=insertar_detalle,
+    **button_style
+).pack(pady=15)
 
 
 
-# === Pestaña de Actualización ===
-frame_actualizar = tk.Frame(notebook, bg="#F7E7A8")
-notebook.add(frame_actualizar, text="Actualizar Datos")
+
+
+# =======================================
+#          PESTAÑA DE ACTUALIZACIÓN
+# =======================================
+
+frame_actualizar = tk.Frame(notebook, bg="#f0ebe1")
+notebook.add(frame_actualizar, text="♻ Actualizar Datos")
 
 tabs_actualizar = ttk.Notebook(frame_actualizar)
-tabs_actualizar.pack(fill="both", expand=True, padx=10, pady=10)
+tabs_actualizar.pack(fill="both", expand=True, padx=15, pady=15)
 
-# --- ACTUALIZAR CONDUCTOR ---
-frame_act_conductor = tk.Frame(tabs_actualizar, bg="#FFFBEA")
-tabs_actualizar.add(frame_act_conductor, text="Conductor")
+# ---------------------------------------
+#  ESTILO GENERAL PARA FORMULARIOS
+# ---------------------------------------
 
-tk.Label(frame_act_conductor, text="Actualizar Conductor", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
-tk.Label(frame_act_conductor, text="ID Conductor:", bg="#FFFBEA").pack()
-entry_id_conductor_act = tk.Entry(frame_act_conductor)
-entry_id_conductor_act.pack()
-tk.Label(frame_act_conductor, text="Nuevo Nombre:", bg="#FFFBEA").pack()
-entry_nombre_conductor_act = tk.Entry(frame_act_conductor)
-entry_nombre_conductor_act.pack()
-tk.Button(frame_act_conductor, text="Actualizar", bg="#0275D8", fg="white", command=actualizar_conductor).pack(pady=10)
+style_label = {
+    "bg": "#faf7ef",
+    "fg": "#4a3b22",
+    "font": ("Segoe UI", 11, "bold"),
+    "anchor": "w"
+}
 
-# --- ACTUALIZAR MODELO ---
-frame_act_modelo = tk.Frame(tabs_actualizar, bg="#FFFBEA")
-tabs_actualizar.add(frame_act_modelo, text="Modelo")
+style_entry = {
+    "font": ("Segoe UI", 11),
+    "bd": 1
+}
 
-tk.Label(frame_act_modelo, text="Actualizar Modelo", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
-tk.Label(frame_act_modelo, text="ID Modelo:", bg="#FFFBEA").pack()
-entry_id_modelo_act = tk.Entry(frame_act_modelo)
-entry_id_modelo_act.pack()
-tk.Label(frame_act_modelo, text="Nueva Descripción:", bg="#FFFBEA").pack()
-entry_desc_modelo_act = tk.Entry(frame_act_modelo)
-entry_desc_modelo_act.pack()
-tk.Button(frame_act_modelo, text="Actualizar", bg="#0275D8", fg="white", command=actualizar_modelo).pack(pady=10)
+button_update = {
+    "font": ("Segoe UI", 12, "bold"),
+    "bg": "#1e64c8",
+    "fg": "white",
+    "activebackground": "#2d7af0",
+    "relief": "flat",
+    "cursor": "hand2",
+    "width": 20,
+    "height": 2
+}
 
-# --- ACTUALIZAR RUTA ---
-frame_act_ruta = tk.Frame(tabs_actualizar, bg="#FFFBEA")
-tabs_actualizar.add(frame_act_ruta, text="Ruta")
 
-tk.Label(frame_act_ruta, text="Actualizar Ruta", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
-tk.Label(frame_act_ruta, text="ID Ruta:", bg="#FFFBEA").pack()
-entry_id_ruta_act = tk.Entry(frame_act_ruta)
-entry_id_ruta_act.pack()
-tk.Label(frame_act_ruta, text="Kilometraje:", bg="#FFFBEA").pack()
-entry_km_ruta_act = tk.Entry(frame_act_ruta)
-entry_km_ruta_act.pack()
-tk.Label(frame_act_ruta, text="Tipo de Ruta:", bg="#FFFBEA").pack()
-entry_tipo_ruta_act = tk.Entry(frame_act_ruta)
-entry_tipo_ruta_act.pack()
-tk.Label(frame_act_ruta, text="Descripción:", bg="#FFFBEA").pack()
-entry_desc_ruta_act = tk.Entry(frame_act_ruta)
-entry_desc_ruta_act.pack()
-tk.Label(frame_act_ruta, text="Estado (0/1):", bg="#FFFBEA").pack()
-entry_estado_ruta_act = tk.Entry(frame_act_ruta)
-entry_estado_ruta_act.pack()
-tk.Button(frame_act_ruta, text="Actualizar", bg="#0275D8", fg="white", command=actualizar_ruta).pack(pady=10)
+# ===================================================
+#               --- ACTUALIZAR CONDUCTOR ---
+# ===================================================
 
-# --- ACTUALIZAR VEHICULO ---
-frame_act_vehiculo = tk.Frame(tabs_actualizar, bg="#FFFBEA")
-tabs_actualizar.add(frame_act_vehiculo, text="Vehículo")
+frame_act_conductor = tk.Frame(tabs_actualizar, bg="#faf7ef")
+tabs_actualizar.add(frame_act_conductor, text="👤 Conductor")
 
-tk.Label(frame_act_vehiculo, text="Actualizar Vehículo", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
-tk.Label(frame_act_vehiculo, text="Placa:", bg="#FFFBEA").pack()
-entry_placa_act = tk.Entry(frame_act_vehiculo)
-entry_placa_act.pack()
-tk.Label(frame_act_vehiculo, text="Marca:", bg="#FFFBEA").pack()
-entry_marca_act = tk.Entry(frame_act_vehiculo)
-entry_marca_act.pack()
-tk.Label(frame_act_vehiculo, text="Tonelaje:", bg="#FFFBEA").pack()
-entry_tonelaje_act = tk.Entry(frame_act_vehiculo)
-entry_tonelaje_act.pack()
-tk.Label(frame_act_vehiculo, text="ID Conductor:", bg="#FFFBEA").pack()
-entry_conductor_act = tk.Entry(frame_act_vehiculo)
-entry_conductor_act.pack()
-tk.Label(frame_act_vehiculo, text="ID Modelo:", bg="#FFFBEA").pack()
-entry_modelo_act = tk.Entry(frame_act_vehiculo)
-entry_modelo_act.pack()
-tk.Label(frame_act_vehiculo, text="Centro de Costos:", bg="#FFFBEA").pack()
-entry_cc_act = tk.Entry(frame_act_vehiculo)
-entry_cc_act.pack()
-tk.Button(frame_act_vehiculo, text="Actualizar", bg="#0275D8", fg="white", command=actualizar_vehiculo).pack(pady=10)
+tk.Label(
+    frame_act_conductor,
+    text="Actualizar Conductor",
+    bg="#faf7ef",
+    fg="#3d2f1c",
+    font=("Segoe UI", 20, "bold")
+).pack(pady=25)
 
-# --- ACTUALIZAR DETALLE ---
-frame_act_detalle = tk.Frame(tabs_actualizar, bg="#FFFBEA")
-tabs_actualizar.add(frame_act_detalle, text="Detalle")
+form = tk.Frame(frame_act_conductor, bg="#faf7ef")
+form.pack(pady=10)
 
-tk.Label(frame_act_detalle, text="Actualizar Detalle", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
-tk.Label(frame_act_detalle, text="ID Detalle:", bg="#FFFBEA").pack()
-entry_id_detalle_act = tk.Entry(frame_act_detalle)
-entry_id_detalle_act.pack()
-tk.Label(frame_act_detalle, text="ID Ruta:", bg="#FFFBEA").pack()
-entry_id_ruta_det_act = tk.Entry(frame_act_detalle)
-entry_id_ruta_det_act.pack()
-tk.Label(frame_act_detalle, text="ID Modelo:", bg="#FFFBEA").pack()
-entry_id_modelo_det_act = tk.Entry(frame_act_detalle)
-entry_id_modelo_det_act.pack()
-tk.Label(frame_act_detalle, text="Consumo por modelo:", bg="#FFFBEA").pack()
-entry_consumo_det_act = tk.Entry(frame_act_detalle)
-entry_consumo_det_act.pack()
-tk.Button(frame_act_detalle, text="Actualizar", bg="#0275D8", fg="white", command=actualizar_detalle).pack(pady=10)
+tk.Label(form, text="ID Conductor:", **style_label).grid(row=0, column=0, pady=5, sticky="w")
+entry_id_conductor_act = tk.Entry(form, **style_entry)
+entry_id_conductor_act.grid(row=0, column=1, pady=5, padx=10)
 
+tk.Label(form, text="Nuevo Nombre:", **style_label).grid(row=1, column=0, pady=5, sticky="w")
+entry_nombre_conductor_act = tk.Entry(form, **style_entry)
+entry_nombre_conductor_act.grid(row=1, column=1, pady=5, padx=10)
+
+tk.Button(
+    frame_act_conductor, text="Actualizar",
+    command=actualizar_conductor, **button_update
+).pack(pady=15)
+
+
+# ===================================================
+#               --- ACTUALIZAR MODELO ---
+# ===================================================
+
+frame_act_modelo = tk.Frame(tabs_actualizar, bg="#faf7ef")
+tabs_actualizar.add(frame_act_modelo, text="📦 Modelo")
+
+tk.Label(
+    frame_act_modelo,
+    text="Actualizar Modelo",
+    bg="#faf7ef",
+    fg="#3d2f1c",
+    font=("Segoe UI", 20, "bold")
+).pack(pady=25)
+
+form = tk.Frame(frame_act_modelo, bg="#faf7ef")
+form.pack(pady=10)
+
+tk.Label(form, text="ID Modelo:", **style_label).grid(row=0, column=0, pady=5, sticky="w")
+entry_id_modelo_act = tk.Entry(form, **style_entry)
+entry_id_modelo_act.grid(row=0, column=1, pady=5, padx=10)
+
+tk.Label(form, text="Nueva Descripción:", **style_label).grid(row=1, column=0, pady=5, sticky="w")
+entry_desc_modelo_act = tk.Entry(form, **style_entry)
+entry_desc_modelo_act.grid(row=1, column=1, pady=5, padx=10)
+
+tk.Button(
+    frame_act_modelo, text="Actualizar",
+    command=actualizar_modelo, **button_update
+).pack(pady=15)
+
+
+# ===================================================
+#                  --- ACTUALIZAR RUTA ---
+# ===================================================
+
+frame_act_ruta = tk.Frame(tabs_actualizar, bg="#faf7ef")
+tabs_actualizar.add(frame_act_ruta, text="🛣 Ruta")
+
+tk.Label(
+    frame_act_ruta,
+    text="Actualizar Ruta",
+    bg="#faf7ef",
+    fg="#3d2f1c",
+    font=("Segoe UI", 20, "bold")
+).pack(pady=25)
+
+form = tk.Frame(frame_act_ruta, bg="#faf7ef")
+form.pack(pady=10)
+
+labels_ruta = [
+    ("ID Ruta:", "id_ruta_act"),
+    ("Kilometraje:", "km_ruta_act"),
+    ("Tipo de Ruta:", "tipo_ruta_act"),
+    ("Descripción:", "desc_ruta_act"),
+    ("Estado (0/1):", "estado_ruta_act")
+]
+
+entries_ruta = {}
+
+for i, (label, key) in enumerate(labels_ruta):
+    tk.Label(form, text=label, **style_label).grid(row=i, column=0, pady=5, sticky="w")
+    entries_ruta[key] = tk.Entry(form, **style_entry)
+    entries_ruta[key].grid(row=i, column=1, pady=5, padx=10)
+
+entry_id_ruta_act       = entries_ruta["id_ruta_act"]
+entry_km_ruta_act       = entries_ruta["km_ruta_act"]
+entry_tipo_ruta_act     = entries_ruta["tipo_ruta_act"]
+entry_desc_ruta_act     = entries_ruta["desc_ruta_act"]
+entry_estado_ruta_act   = entries_ruta["estado_ruta_act"]
+
+tk.Button(
+    frame_act_ruta, text="Actualizar",
+    command=actualizar_ruta, **button_update
+).pack(pady=15)
+
+
+# ===================================================
+#               --- ACTUALIZAR VEHÍCULO ---
+# ===================================================
+
+frame_act_vehiculo = tk.Frame(tabs_actualizar, bg="#faf7ef")
+tabs_actualizar.add(frame_act_vehiculo, text="🚗 Vehículo")
+
+tk.Label(
+    frame_act_vehiculo,
+    text="Actualizar Vehículo",
+    bg="#faf7ef",
+    fg="#3d2f1c",
+    font=("Segoe UI", 20, "bold")
+).pack(pady=25)
+
+form = tk.Frame(frame_act_vehiculo, bg="#faf7ef")
+form.pack(pady=10)
+
+labels_veh = [
+    ("Placa:", "placa_act"),
+    ("Marca:", "marca_act"),
+    ("Tonelaje:", "tonelaje_act"),
+    ("ID Conductor:", "id_cond_act"),
+    ("ID Modelo:", "id_modelo_act"),
+    ("Centro de Costos:", "cc_act")
+]
+
+entries_veh = {}
+
+for i, (label, key) in enumerate(labels_veh):
+    tk.Label(form, text=label, **style_label).grid(row=i, column=0, pady=5, sticky="w")
+    entries_veh[key] = tk.Entry(form, **style_entry)
+    entries_veh[key].grid(row=i, column=1, pady=5, padx=10)
+
+entry_placa_act        = entries_veh["placa_act"]
+entry_marca_act        = entries_veh["marca_act"]
+entry_tonelaje_act     = entries_veh["tonelaje_act"]
+entry_conductor_act    = entries_veh["id_cond_act"]
+entry_modelo_act       = entries_veh["id_modelo_act"]
+entry_cc_act           = entries_veh["cc_act"]
+
+tk.Button(
+    frame_act_vehiculo, text="Actualizar",
+    command=actualizar_vehiculo, **button_update
+).pack(pady=15)
+
+
+# ===================================================
+#               --- ACTUALIZAR DETALLE ---
+# ===================================================
+
+frame_act_detalle = tk.Frame(tabs_actualizar, bg="#faf7ef")
+tabs_actualizar.add(frame_act_detalle, text="📑 Detalle")
+
+tk.Label(
+    frame_act_detalle,
+    text="Actualizar Detalle",
+    bg="#faf7ef",
+    fg="#3d2f1c",
+    font=("Segoe UI", 20, "bold")
+).pack(pady=25)
+
+form = tk.Frame(frame_act_detalle, bg="#faf7ef")
+form.pack(pady=10)
+
+labels_det = [
+    ("ID Detalle:", "id_detalle_act"),
+    ("ID Ruta:", "id_ruta_det_act"),
+    ("ID Modelo:", "id_modelo_det_act"),
+    ("Consumo por Modelo:", "consumo_det_act")
+]
+
+entries_det = {}
+
+for i, (label, key) in enumerate(labels_det):
+    tk.Label(form, text=label, **style_label).grid(row=i, column=0, pady=5, sticky="w")
+    entries_det[key] = tk.Entry(form, **style_entry)
+    entries_det[key].grid(row=i, column=1, pady=5, padx=10)
+
+entry_id_detalle_act      = entries_det["id_detalle_act"]
+entry_id_ruta_det_act     = entries_det["id_ruta_det_act"]
+entry_id_modelo_det_act   = entries_det["id_modelo_det_act"]
+entry_consumo_det_act     = entries_det["consumo_det_act"]
+
+tk.Button(
+    frame_act_detalle, text="Actualizar",
+    command=actualizar_detalle, **button_update
+).pack(pady=15)
 
 # === Pestaña de Eliminación ===
 frame_eliminar = tk.Frame(notebook, bg="#F7E7A8")
