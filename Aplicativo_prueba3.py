@@ -1077,63 +1077,192 @@ tk.Button(
     command=actualizar_detalle, **button_update
 ).pack(pady=15)
 
-# === Pestaña de Eliminación ===
-frame_eliminar = tk.Frame(notebook, bg="#F7E7A8")
-notebook.add(frame_eliminar, text="Eliminar Datos")
+# =======================================
+#          PESTAÑA DE ELIMINACIÓN
+# =======================================
+
+frame_eliminar = tk.Frame(notebook, bg="#f0ebe1")
+notebook.add(frame_eliminar, text="🗑 Eliminar Datos")
 
 tabs_eliminar = ttk.Notebook(frame_eliminar)
-tabs_eliminar.pack(fill="both", expand=True, padx=10, pady=10)
+tabs_eliminar.pack(fill="both", expand=True, padx=15, pady=15)
 
-# --- ELIMINAR CONDUCTOR ---
-frame_del_conductor = tk.Frame(tabs_eliminar, bg="#FFFBEA")
-tabs_eliminar.add(frame_del_conductor, text="Conductor")
+# ---------------------------------------
+#  ESTILO GENERAL
+# ---------------------------------------
 
-tk.Label(frame_del_conductor, text="Eliminar Conductor", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
-tk.Label(frame_del_conductor, text="ID Conductor:", bg="#FFFBEA").pack()
-entry_id_conductor_del = tk.Entry(frame_del_conductor)
-entry_id_conductor_del.pack()
-tk.Button(frame_del_conductor, text="Eliminar", bg="#D9534F", fg="white", command=eliminar_conductor).pack(pady=10)
+delete_label_style = {
+    "bg": "#faf7ef",
+    "fg": "#4a3b22",
+    "font": ("Segoe UI", 11, "bold"),
+    "anchor": "w"
+}
+
+delete_entry_style = {
+    "font": ("Segoe UI", 11),
+    "bd": 1
+}
+
+button_delete_style = {
+    "font": ("Segoe UI", 12, "bold"),
+    "bg": "#c62828",
+    "fg": "white",
+    "activebackground": "#e53935",
+    "relief": "flat",
+    "cursor": "hand2",
+    "width": 20,
+    "height": 2
+}
 
 
-# --- ELIMINAR MODELO ---
-frame_del_modelo = tk.Frame(tabs_eliminar, bg="#FFFBEA")
-tabs_eliminar.add(frame_del_modelo, text="Modelo")
+# ===================================================
+#               --- ELIMINAR CONDUCTOR ---
+# ===================================================
 
-tk.Label(frame_del_modelo, text="Eliminar Modelo", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
-tk.Label(frame_del_modelo, text="ID Modelo:", bg="#FFFBEA").pack()
-entry_id_modelo_del = tk.Entry(frame_del_modelo)
-entry_id_modelo_del.pack()
-tk.Button(frame_del_modelo, text="Eliminar", bg="#D9534F", fg="white", command=eliminar_modelo).pack(pady=10)
+frame_del_conductor = tk.Frame(tabs_eliminar, bg="#faf7ef")
+tabs_eliminar.add(frame_del_conductor, text="👤 Conductor")
 
-# --- ELIMINAR RUTA ---
-frame_del_ruta = tk.Frame(tabs_eliminar, bg="#FFFBEA")
-tabs_eliminar.add(frame_del_ruta, text="Ruta")
+tk.Label(
+    frame_del_conductor,
+    text="Eliminar Conductor",
+    bg="#faf7ef",
+    fg="#3d2f1c",
+    font=("Segoe UI", 20, "bold")
+).pack(pady=25)
 
-tk.Label(frame_del_ruta, text="Eliminar Ruta", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
-tk.Label(frame_del_ruta, text="ID Ruta:", bg="#FFFBEA").pack()
-entry_id_ruta_del = tk.Entry(frame_del_ruta)
-entry_id_ruta_del.pack()
-tk.Button(frame_del_ruta, text="Eliminar", bg="#D9534F", fg="white", command=eliminar_ruta).pack(pady=10)
+frm = tk.Frame(frame_del_conductor, bg="#faf7ef")
+frm.pack(pady=10)
 
-# --- ELIMINAR VEHICULO ---
-frame_del_vehiculo = tk.Frame(tabs_eliminar, bg="#FFFBEA")
-tabs_eliminar.add(frame_del_vehiculo, text="Vehículo")
+tk.Label(frm, text="ID Conductor:", **delete_label_style).grid(row=0, column=0, sticky="w", pady=5)
+entry_id_conductor_del = tk.Entry(frm, **delete_entry_style)
+entry_id_conductor_del.grid(row=0, column=1, padx=10, pady=5)
 
-tk.Label(frame_del_vehiculo, text="Eliminar Vehículo", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
-tk.Label(frame_del_vehiculo, text="Placa:", bg="#FFFBEA").pack()
-entry_placa_del = tk.Entry(frame_del_vehiculo)
-entry_placa_del.pack()
-tk.Button(frame_del_vehiculo, text="Eliminar", bg="#D9534F", fg="white", command=eliminar_vehiculo).pack(pady=10)
+tk.Button(
+    frame_del_conductor,
+    text="Eliminar Conductor",
+    command=eliminar_conductor,
+    **button_delete_style
+).pack(pady=15)
 
-# --- ELIMINAR DETALLE ---
-frame_del_detalle = tk.Frame(tabs_eliminar, bg="#FFFBEA")
-tabs_eliminar.add(frame_del_detalle, text="Detalle")
 
-tk.Label(frame_del_detalle, text="Eliminar Detalle", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
-tk.Label(frame_del_detalle, text="ID Detalle:", bg="#FFFBEA").pack()
-entry_id_detalle_del = tk.Entry(frame_del_detalle)
-entry_id_detalle_del.pack()
-tk.Button(frame_del_detalle, text="Eliminar", bg="#D9534F", fg="white", command=eliminar_detalle).pack(pady=10)
+# ===================================================
+#               --- ELIMINAR MODELO ---
+# ===================================================
+
+frame_del_modelo = tk.Frame(tabs_eliminar, bg="#faf7ef")
+tabs_eliminar.add(frame_del_modelo, text="📦 Modelo")
+
+tk.Label(
+    frame_del_modelo,
+    text="Eliminar Modelo",
+    bg="#faf7ef",
+    fg="#3d2f1c",
+    font=("Segoe UI", 20, "bold")
+).pack(pady=25)
+
+frm = tk.Frame(frame_del_modelo, bg="#faf7ef")
+frm.pack(pady=10)
+
+tk.Label(frm, text="ID Modelo:", **delete_label_style).grid(row=0, column=0, sticky="w", pady=5)
+entry_id_modelo_del = tk.Entry(frm, **delete_entry_style)
+entry_id_modelo_del.grid(row=0, column=1, padx=10, pady=5)
+
+tk.Button(
+    frame_del_modelo,
+    text="Eliminar Modelo",
+    command=eliminar_modelo,
+    **button_delete_style
+).pack(pady=15)
+
+
+# ===================================================
+#               --- ELIMINAR RUTA ---
+# ===================================================
+
+frame_del_ruta = tk.Frame(tabs_eliminar, bg="#faf7ef")
+tabs_eliminar.add(frame_del_ruta, text="🛣 Ruta")
+
+tk.Label(
+    frame_del_ruta,
+    text="Eliminar Ruta",
+    bg="#faf7ef",
+    fg="#3d2f1c",
+    font=("Segoe UI", 20, "bold")
+).pack(pady=25)
+
+frm = tk.Frame(frame_del_ruta, bg="#faf7ef")
+frm.pack(pady=10)
+
+tk.Label(frm, text="ID Ruta:", **delete_label_style).grid(row=0, column=0, pady=5, sticky="w")
+entry_id_ruta_del = tk.Entry(frm, **delete_entry_style)
+entry_id_ruta_del.grid(row=0, column=1, pady=5, padx=10)
+
+tk.Button(
+    frame_del_ruta,
+    text="Eliminar Ruta",
+    command=eliminar_ruta,
+    **button_delete_style
+).pack(pady=15)
+
+
+# ===================================================
+#               --- ELIMINAR VEHÍCULO ---
+# ===================================================
+
+frame_del_vehiculo = tk.Frame(tabs_eliminar, bg="#faf7ef")
+tabs_eliminar.add(frame_del_vehiculo, text="🚗 Vehículo")
+
+tk.Label(
+    frame_del_vehiculo,
+    text="Eliminar Vehículo",
+    bg="#faf7ef",
+    fg="#3d2f1c",
+    font=("Segoe UI", 20, "bold")
+).pack(pady=25)
+
+frm = tk.Frame(frame_del_vehiculo, bg="#faf7ef")
+frm.pack(pady=10)
+
+tk.Label(frm, text="Placa:", **delete_label_style).grid(row=0, column=0, pady=5, sticky="w")
+entry_placa_del = tk.Entry(frm, **delete_entry_style)
+entry_placa_del.grid(row=0, column=1, pady=5, padx=10)
+
+tk.Button(
+    frame_del_vehiculo,
+    text="Eliminar Vehículo",
+    command=eliminar_vehiculo,
+    **button_delete_style
+).pack(pady=15)
+
+
+# ===================================================
+#               --- ELIMINAR DETALLE ---
+# ===================================================
+
+frame_del_detalle = tk.Frame(tabs_eliminar, bg="#faf7ef")
+tabs_eliminar.add(frame_del_detalle, text="📑 Detalle")
+
+tk.Label(
+    frame_del_detalle,
+    text="Eliminar Detalle",
+    bg="#faf7ef",
+    fg="#3d2f1c",
+    font=("Segoe UI", 20, "bold")
+).pack(pady=25)
+
+frm = tk.Frame(frame_del_detalle, bg="#faf7ef")
+frm.pack(pady=10)
+
+tk.Label(frm, text="ID Detalle:", **delete_label_style).grid(row=0, column=0, pady=5, sticky="w")
+entry_id_detalle_del = tk.Entry(frm, **delete_entry_style)
+entry_id_detalle_del.grid(row=0, column=1, pady=5, padx=10)
+
+tk.Button(
+    frame_del_detalle,
+    text="Eliminar Detalle",
+    command=eliminar_detalle,
+    **button_delete_style
+).pack(pady=15)
 
 
 
