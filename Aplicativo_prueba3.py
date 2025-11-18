@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import mysql.connector
+from mysql.connector import Error
 
 # --------------------------
 # CONEXIÓN A LA BASE DE DATOS
@@ -55,7 +56,7 @@ def insertar_conductor():
             return
 
         sql = "INSERT INTO Conductor (nombre_conductor) VALUES (%s)"
-        cursor.execute(sql, (nombre))
+        cursor.execute(sql, (nombre, ))
         conexion.commit()
         messagebox.showinfo("Éxito", "Conductor agregado correctamente.")
         entry_nombre_conductor.delete(0, tk.END)
@@ -118,7 +119,7 @@ def insertar_modelo():
 
         # Consulta SQL
         sql = "INSERT INTO Modelo (modelo_descripcion) VALUES (%s)"
-        cursor.execute(sql, (descripcion_modelo,))  # tupla correcta
+        cursor.execute(sql, (descripcion_modelo,))
         conexion.commit()
 
         messagebox.showinfo("Éxito", "Modelo agregado correctamente.")
@@ -209,50 +210,211 @@ def consulta_vehiculos_por_modelo():
 def consulta_modelo_especifico():
     ejecutar_consulta("SELECT * FROM Modelo WHERE id_modelo = 10;")
 
+#Consultas de todas las tablas
+def consulta_ruta():
+    ejecutar_consulta("SELECT * FROM  ruta;")
+
+def consulta_vehiculo():
+    ejecutar_consulta("SELECT * FROM  vehiculo;")
+
+def consulta_conductor():
+    ejecutar_consulta("SELECT * FROM  conductor;")
+
+def consulta_modelo():
+    ejecutar_consulta("SELECT * FROM  modelo;")
+
+def consulta_detalle():
+    ejecutar_consulta("SELECT * FROM  detalle;")
+
 #UPDATE
+#Actualizar Conductor
+def actualizar_conductor():
+    conectar_bd()
+
+    id_conductor = entry_id_conductor_act.get()
+    nuevo_nombre = entry_nombre_conductor_act.get()
+
+    try:
+        sql = "UPDATE Conductor SET nombre_conductor=%s WHERE id_conductor=%s"
+        cursor.execute(sql, (nuevo_nombre, id_conductor))
+        conexion.commit()
+
+        if cursor.rowcount > 0:
+            messagebox.showinfo("Actualizar", "Conductor actualizado correctamente")
+        else:
+            messagebox.showwarning("Actualizar", "No existe un conductor con ese ID")
+
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo actualizar:\n{e}")
+
+
+
+#Actualizar Ruta
+def actualizar_ruta():
+    conectar_bd()
+
+    id_ruta = entry_id_ruta_act.get()
+    nuevo_km = entry_km_ruta_act.get()
+    nuevo_tipo = entry_tipo_ruta_act.get()
+    nueva_desc = entry_desc_ruta_act.get()
+    nuevo_estado = entry_estado_ruta_act.get()
+
+    try:
+        sql = """UPDATE Ruta 
+                 SET kilometraje=%s, tipo_ruta=%s, descripcion=%s, estado_ruta=%s
+                 WHERE id_ruta=%s"""
+        cursor.execute(sql, (nuevo_km, nuevo_tipo, nueva_desc, nuevo_estado, id_ruta))
+        conexion.commit()
+
+        if cursor.rowcount > 0:
+            messagebox.showinfo("Actualizar", "Ruta actualizada correctamente")
+        else:
+            messagebox.showwarning("Actualizar", "No existe una ruta con ese ID")
+
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo actualizar:\n{e}")
+
+
+
+
+#Actualizar Vehículo
+def actualizar_vehiculo():
+    conectar_bd()
+
+    placa = entry_placa_act.get()
+    marca = entry_marca_act.get()
+    tonelaje = entry_tonelaje_act.get()
+    id_conductor = entry_conductor_act.get()
+    id_modelo = entry_modelo_act.get()
+    centro_costos = entry_cc_act.get()
+
+    try:
+        sql = """UPDATE Vehiculo 
+                 SET marca=%s, tonelaje=%s, id_conductor=%s, id_modelo=%s, centro_costos=%s
+                 WHERE placa=%s"""
+        cursor.execute(sql, (marca, tonelaje, id_conductor, id_modelo, centro_costos, placa))
+        conexion.commit()
+
+        if cursor.rowcount > 0:
+            messagebox.showinfo("Actualizar", "Vehículo actualizado correctamente")
+        else:
+            messagebox.showwarning("Actualizar", "No existe un vehículo con esa placa")
+
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo actualizar:\n{e}")
+
+
+
+#Actualizar Modelo
+def actualizar_modelo():
+    conectar_bd()
+
+    id_modelo = entry_id_modelo_act.get()
+    nuevo_desc = entry_desc_modelo_act.get()
+
+    try:
+        sql = "UPDATE Modelo SET modelo_descripcion=%s WHERE id_modelo=%s"
+        cursor.execute(sql, (nuevo_desc, id_modelo))
+        conexion.commit()
+
+        if cursor.rowcount > 0:
+            messagebox.showinfo("Actualizar", "Modelo actualizado correctamente")
+        else:
+            messagebox.showwarning("Actualizar", "No existe un modelo con ese ID")
+
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo actualizar:\n{e}")
+
+
+
+#Actualizar Detalle
+def actualizar_detalle():
+    conectar_bd()
+
+    id_detalle = entry_id_detalle_act.get()
+    id_ruta = entry_id_ruta_det_act.get()
+    id_modelo = entry_id_modelo_det_act.get()
+    consumo = entry_consumo_det_act.get()
+
+    try:
+        sql = """UPDATE Detalle 
+                 SET id_ruta=%s, id_modelo=%s, consumo_por_modelo=%s
+                 WHERE id_detalle=%s"""
+        cursor.execute(sql, (id_ruta, id_modelo, consumo, id_detalle))
+        conexion.commit()
+
+        if cursor.rowcount > 0:
+            messagebox.showinfo("Actualizar", "Detalle actualizado correctamente")
+        else:
+            messagebox.showwarning("Actualizar", "No existe un detalle con ese ID")
+
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo actualizar:\n{e}")
+
 
 
 #DELETE: Borrados lógicos
+
+#Eliminar Detalle
 def eliminar_detalle():
+    conectar_bd()
+    id_detalle = entry_id_detalle_del.get()
     try:
-        id_detalle = entry_id_detalle.get().strip()
-
-        # Validación
-        if not id_detalle:
-            messagebox.showwarning("Campo vacío", "Ingrese el ID del detalle a eliminar.")
-            return
-
-        if not id_detalle.isdigit():
-            messagebox.showwarning("Valor inválido", "El ID debe ser un número entero.")
-            return
-
-        id_detalle = int(id_detalle)
-
-        # Verificar si existe
-        sql_verificar = "SELECT * FROM Detalle WHERE id_detalle = %s"
-        cursor.execute(sql_verificar, (id_detalle,))
-        registro = cursor.fetchone()
-
-        if not registro:
-            messagebox.showwarning("No encontrado", "No existe un registro con ese ID.")
-            return
-
-        # Confirmación
-        confirmar = messagebox.askyesno("Confirmar", f"¿Desea eliminar el registro ID {id_detalle}?")
-        if not confirmar:
-            return
-
-        # Eliminar
-        sql_delete = "DELETE FROM Detalle WHERE id_detalle = %s"
-        cursor.execute(sql_delete, (id_detalle,))
+        cursor.callproc("sp_eliminar_detalle", (id_detalle,))
         conexion.commit()
-
-        messagebox.showinfo("Éxito", "Registro eliminado correctamente.")
-        entry_id_detalle.delete(0, tk.END)
-
+        messagebox.showinfo("Eliminar", "Detalle eliminado correctamente")
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo eliminar:\n{e}")
 
+
+
+#Eliminar Conductor
+def eliminar_conductor():
+    conectar_bd()
+    id_conductor = entry_id_conductor_del.get()
+
+    try:
+        cursor.callproc("sp_eliminar_conductor", (id_conductor,))
+        conexion.commit()
+        messagebox.showinfo("Eliminar", "Conductor eliminado correctamente")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo eliminar:\n{e}")
+
+
+#Eliminar Modelo
+def eliminar_modelo():
+    conectar_bd()
+    id_modelo = entry_id_modelo_del.get()
+    try:
+        cursor.callproc("sp_eliminar_modelo", (id_modelo,))
+        conexion.commit()
+        messagebox.showinfo("Eliminar", "Modelo eliminado correctamente")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo eliminar:\n{e}")
+
+
+#Eliminar Ruta
+def eliminar_ruta():
+    conectar_bd()
+    id_ruta = entry_id_ruta_del.get()
+    try:
+        cursor.callproc("sp_eliminar_ruta", (id_ruta,))
+        conexion.commit()
+        messagebox.showinfo("Eliminar", "Ruta eliminada correctamente")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo eliminar:\n{e}")
+
+
+#Eliminar Vehículo
+def eliminar_vehiculo():
+    conectar_bd()
+    placa = entry_placa_del.get()
+    try:
+        cursor.callproc("sp_eliminar_vehiculo", (placa,))
+        conexion.commit()
+        messagebox.showinfo("Eliminar", "Vehículo eliminado correctamente")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo eliminar:\n{e}")
 
 
 
@@ -296,6 +458,11 @@ scroll.config(command=texto_resultados.yview)
 
 # Botones de consulta
 consultas = [
+    ("TODAS LAS RUTAS", consulta_ruta),
+    ("TODOS LOS DETALLES", consulta_detalle),
+    ("TODOS LOS MODELOS", consulta_modelo),
+    ("TODOS LOS VEHICULOS", consulta_vehiculo),
+    ("TODOS LOS CONDUCTORES", consulta_conductor), 
     ("Vehículos con conductor asignado", consulta_vehiculos_con_conductor),
     ("Rutas activas", consulta_rutas_activas),
     ("Detalles de rutas", consulta_detalles_rutas),
@@ -329,12 +496,6 @@ tk.Label(frame_conductor, text="Agregar Conductor", font=("Arial", 18, "bold"), 
 tk.Label(frame_conductor, text="Nombre:", bg="#FFFBEA").pack()
 entry_nombre_conductor = tk.Entry(frame_conductor)
 entry_nombre_conductor.pack()
-tk.Label(frame_conductor, text="Licencia:", bg="#FFFBEA").pack()
-entry_licencia_conductor = tk.Entry(frame_conductor)
-entry_licencia_conductor.pack()
-tk.Label(frame_conductor, text="Teléfono:", bg="#FFFBEA").pack()
-entry_telefono_conductor = tk.Entry(frame_conductor)
-entry_telefono_conductor.pack()
 tk.Button(frame_conductor, text="Guardar Conductor", bg="#4CAF50", fg="white", command=insertar_conductor).pack(pady=10)
 
 # --- Insertar Vehículo ---
@@ -377,6 +538,231 @@ tk.Label(frame_ruta, text="Estado (1=Activo, 0=Inactivo):", bg="#FFFBEA").pack()
 entry_estado_ruta = tk.Entry(frame_ruta)
 entry_estado_ruta.pack()
 tk.Button(frame_ruta, text="Guardar Ruta", bg="#4CAF50", fg="white", command=insertar_ruta).pack(pady=10)
+
+#--- Insertar Modelo ---
+frame_modelo = tk.Frame(tabs_insertar, bg="#FFFBEA")
+tabs_insertar.add(frame_modelo, text="Modelo")
+
+tk.Label(
+    frame_modelo,
+    text="Agregar Modelo",
+    font=("Arial", 18, "bold"),
+    bg="#FFFBEA"
+).pack(pady=10)
+
+tk.Label(
+    frame_modelo,
+    text="Descripción del Modelo:",
+    bg="#FFFBEA"
+).pack()
+
+entry_modelo_descripcion = tk.Entry(frame_modelo)
+entry_modelo_descripcion.pack()
+
+tk.Button(
+    frame_modelo,
+    text="Guardar Modelo",
+    bg="#4CAF50",
+    fg="white",
+    command=insertar_modelo
+).pack(pady=10)
+
+# --- Insertar Detalle ---
+frame_detalle = tk.Frame(tabs_insertar, bg="#FFFBEA")
+tabs_insertar.add(frame_detalle, text="Detalle")
+
+tk.Label(
+    frame_detalle,
+    text="Agregar Detalle",
+    font=("Arial", 18, "bold"),
+    bg="#FFFBEA"
+).pack(pady=10)
+
+# ID Ruta
+tk.Label(frame_detalle, text="ID Ruta:", bg="#FFFBEA").pack()
+entry_id_ruta = tk.Entry(frame_detalle)
+entry_id_ruta.pack()
+
+# ID Modelo
+tk.Label(frame_detalle, text="ID Modelo:", bg="#FFFBEA").pack()
+entry_id_modelo = tk.Entry(frame_detalle)
+entry_id_modelo.pack()
+
+# Consumo por Modelo
+tk.Label(frame_detalle, text="Consumo por Modelo:", bg="#FFFBEA").pack()
+entry_consumo_por_modelo = tk.Entry(frame_detalle)
+entry_consumo_por_modelo.pack()
+
+# Botón Guardar
+tk.Button(
+    frame_detalle,
+    text="Guardar Detalle",
+    bg="#4CAF50",
+    fg="white",
+    command=insertar_detalle
+).pack(pady=10)
+
+
+
+# === Pestaña de Actualización ===
+frame_actualizar = tk.Frame(notebook, bg="#F7E7A8")
+notebook.add(frame_actualizar, text="Actualizar Datos")
+
+tabs_actualizar = ttk.Notebook(frame_actualizar)
+tabs_actualizar.pack(fill="both", expand=True, padx=10, pady=10)
+
+# --- ACTUALIZAR CONDUCTOR ---
+frame_act_conductor = tk.Frame(tabs_actualizar, bg="#FFFBEA")
+tabs_actualizar.add(frame_act_conductor, text="Conductor")
+
+tk.Label(frame_act_conductor, text="Actualizar Conductor", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
+tk.Label(frame_act_conductor, text="ID Conductor:", bg="#FFFBEA").pack()
+entry_id_conductor_act = tk.Entry(frame_act_conductor)
+entry_id_conductor_act.pack()
+tk.Label(frame_act_conductor, text="Nuevo Nombre:", bg="#FFFBEA").pack()
+entry_nombre_conductor_act = tk.Entry(frame_act_conductor)
+entry_nombre_conductor_act.pack()
+tk.Button(frame_act_conductor, text="Actualizar", bg="#0275D8", fg="white", command=actualizar_conductor).pack(pady=10)
+
+# --- ACTUALIZAR MODELO ---
+frame_act_modelo = tk.Frame(tabs_actualizar, bg="#FFFBEA")
+tabs_actualizar.add(frame_act_modelo, text="Modelo")
+
+tk.Label(frame_act_modelo, text="Actualizar Modelo", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
+tk.Label(frame_act_modelo, text="ID Modelo:", bg="#FFFBEA").pack()
+entry_id_modelo_act = tk.Entry(frame_act_modelo)
+entry_id_modelo_act.pack()
+tk.Label(frame_act_modelo, text="Nueva Descripción:", bg="#FFFBEA").pack()
+entry_desc_modelo_act = tk.Entry(frame_act_modelo)
+entry_desc_modelo_act.pack()
+tk.Button(frame_act_modelo, text="Actualizar", bg="#0275D8", fg="white", command=actualizar_modelo).pack(pady=10)
+
+# --- ACTUALIZAR RUTA ---
+frame_act_ruta = tk.Frame(tabs_actualizar, bg="#FFFBEA")
+tabs_actualizar.add(frame_act_ruta, text="Ruta")
+
+tk.Label(frame_act_ruta, text="Actualizar Ruta", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
+tk.Label(frame_act_ruta, text="ID Ruta:", bg="#FFFBEA").pack()
+entry_id_ruta_act = tk.Entry(frame_act_ruta)
+entry_id_ruta_act.pack()
+tk.Label(frame_act_ruta, text="Kilometraje:", bg="#FFFBEA").pack()
+entry_km_ruta_act = tk.Entry(frame_act_ruta)
+entry_km_ruta_act.pack()
+tk.Label(frame_act_ruta, text="Tipo de Ruta:", bg="#FFFBEA").pack()
+entry_tipo_ruta_act = tk.Entry(frame_act_ruta)
+entry_tipo_ruta_act.pack()
+tk.Label(frame_act_ruta, text="Descripción:", bg="#FFFBEA").pack()
+entry_desc_ruta_act = tk.Entry(frame_act_ruta)
+entry_desc_ruta_act.pack()
+tk.Label(frame_act_ruta, text="Estado (0/1):", bg="#FFFBEA").pack()
+entry_estado_ruta_act = tk.Entry(frame_act_ruta)
+entry_estado_ruta_act.pack()
+tk.Button(frame_act_ruta, text="Actualizar", bg="#0275D8", fg="white", command=actualizar_ruta).pack(pady=10)
+
+# --- ACTUALIZAR VEHICULO ---
+frame_act_vehiculo = tk.Frame(tabs_actualizar, bg="#FFFBEA")
+tabs_actualizar.add(frame_act_vehiculo, text="Vehículo")
+
+tk.Label(frame_act_vehiculo, text="Actualizar Vehículo", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
+tk.Label(frame_act_vehiculo, text="Placa:", bg="#FFFBEA").pack()
+entry_placa_act = tk.Entry(frame_act_vehiculo)
+entry_placa_act.pack()
+tk.Label(frame_act_vehiculo, text="Marca:", bg="#FFFBEA").pack()
+entry_marca_act = tk.Entry(frame_act_vehiculo)
+entry_marca_act.pack()
+tk.Label(frame_act_vehiculo, text="Tonelaje:", bg="#FFFBEA").pack()
+entry_tonelaje_act = tk.Entry(frame_act_vehiculo)
+entry_tonelaje_act.pack()
+tk.Label(frame_act_vehiculo, text="ID Conductor:", bg="#FFFBEA").pack()
+entry_conductor_act = tk.Entry(frame_act_vehiculo)
+entry_conductor_act.pack()
+tk.Label(frame_act_vehiculo, text="ID Modelo:", bg="#FFFBEA").pack()
+entry_modelo_act = tk.Entry(frame_act_vehiculo)
+entry_modelo_act.pack()
+tk.Label(frame_act_vehiculo, text="Centro de Costos:", bg="#FFFBEA").pack()
+entry_cc_act = tk.Entry(frame_act_vehiculo)
+entry_cc_act.pack()
+tk.Button(frame_act_vehiculo, text="Actualizar", bg="#0275D8", fg="white", command=actualizar_vehiculo).pack(pady=10)
+
+# --- ACTUALIZAR DETALLE ---
+frame_act_detalle = tk.Frame(tabs_actualizar, bg="#FFFBEA")
+tabs_actualizar.add(frame_act_detalle, text="Detalle")
+
+tk.Label(frame_act_detalle, text="Actualizar Detalle", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
+tk.Label(frame_act_detalle, text="ID Detalle:", bg="#FFFBEA").pack()
+entry_id_detalle_act = tk.Entry(frame_act_detalle)
+entry_id_detalle_act.pack()
+tk.Label(frame_act_detalle, text="ID Ruta:", bg="#FFFBEA").pack()
+entry_id_ruta_det_act = tk.Entry(frame_act_detalle)
+entry_id_ruta_det_act.pack()
+tk.Label(frame_act_detalle, text="ID Modelo:", bg="#FFFBEA").pack()
+entry_id_modelo_det_act = tk.Entry(frame_act_detalle)
+entry_id_modelo_det_act.pack()
+tk.Label(frame_act_detalle, text="Consumo por modelo:", bg="#FFFBEA").pack()
+entry_consumo_det_act = tk.Entry(frame_act_detalle)
+entry_consumo_det_act.pack()
+tk.Button(frame_act_detalle, text="Actualizar", bg="#0275D8", fg="white", command=actualizar_detalle).pack(pady=10)
+
+
+# === Pestaña de Eliminación ===
+frame_eliminar = tk.Frame(notebook, bg="#F7E7A8")
+notebook.add(frame_eliminar, text="Eliminar Datos")
+
+tabs_eliminar = ttk.Notebook(frame_eliminar)
+tabs_eliminar.pack(fill="both", expand=True, padx=10, pady=10)
+
+# --- ELIMINAR CONDUCTOR ---
+frame_del_conductor = tk.Frame(tabs_eliminar, bg="#FFFBEA")
+tabs_eliminar.add(frame_del_conductor, text="Conductor")
+
+tk.Label(frame_del_conductor, text="Eliminar Conductor", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
+tk.Label(frame_del_conductor, text="ID Conductor:", bg="#FFFBEA").pack()
+entry_id_conductor_del = tk.Entry(frame_del_conductor)
+entry_id_conductor_del.pack()
+tk.Button(frame_del_conductor, text="Eliminar", bg="#D9534F", fg="white", command=eliminar_conductor).pack(pady=10)
+
+
+# --- ELIMINAR MODELO ---
+frame_del_modelo = tk.Frame(tabs_eliminar, bg="#FFFBEA")
+tabs_eliminar.add(frame_del_modelo, text="Modelo")
+
+tk.Label(frame_del_modelo, text="Eliminar Modelo", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
+tk.Label(frame_del_modelo, text="ID Modelo:", bg="#FFFBEA").pack()
+entry_id_modelo_del = tk.Entry(frame_del_modelo)
+entry_id_modelo_del.pack()
+tk.Button(frame_del_modelo, text="Eliminar", bg="#D9534F", fg="white", command=eliminar_modelo).pack(pady=10)
+
+# --- ELIMINAR RUTA ---
+frame_del_ruta = tk.Frame(tabs_eliminar, bg="#FFFBEA")
+tabs_eliminar.add(frame_del_ruta, text="Ruta")
+
+tk.Label(frame_del_ruta, text="Eliminar Ruta", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
+tk.Label(frame_del_ruta, text="ID Ruta:", bg="#FFFBEA").pack()
+entry_id_ruta_del = tk.Entry(frame_del_ruta)
+entry_id_ruta_del.pack()
+tk.Button(frame_del_ruta, text="Eliminar", bg="#D9534F", fg="white", command=eliminar_ruta).pack(pady=10)
+
+# --- ELIMINAR VEHICULO ---
+frame_del_vehiculo = tk.Frame(tabs_eliminar, bg="#FFFBEA")
+tabs_eliminar.add(frame_del_vehiculo, text="Vehículo")
+
+tk.Label(frame_del_vehiculo, text="Eliminar Vehículo", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
+tk.Label(frame_del_vehiculo, text="Placa:", bg="#FFFBEA").pack()
+entry_placa_del = tk.Entry(frame_del_vehiculo)
+entry_placa_del.pack()
+tk.Button(frame_del_vehiculo, text="Eliminar", bg="#D9534F", fg="white", command=eliminar_vehiculo).pack(pady=10)
+
+# --- ELIMINAR DETALLE ---
+frame_del_detalle = tk.Frame(tabs_eliminar, bg="#FFFBEA")
+tabs_eliminar.add(frame_del_detalle, text="Detalle")
+
+tk.Label(frame_del_detalle, text="Eliminar Detalle", font=("Arial", 18, "bold"), bg="#FFFBEA").pack(pady=10)
+tk.Label(frame_del_detalle, text="ID Detalle:", bg="#FFFBEA").pack()
+entry_id_detalle_del = tk.Entry(frame_del_detalle)
+entry_id_detalle_del.pack()
+tk.Button(frame_del_detalle, text="Eliminar", bg="#D9534F", fg="white", command=eliminar_detalle).pack(pady=10)
+
+
 
 # Ejecutar ventana
 ventana.mainloop()
