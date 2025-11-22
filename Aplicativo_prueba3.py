@@ -34,15 +34,29 @@ def cerrar_conexion():
 # --------------------------
 # FUNCIÓN GENERAL PARA CONSULTAS
 # --------------------------
-def ejecutar_consulta(sql):
+def ejecutar_procedimiento(proc_nombre):
+    """
+    Ejecuta un procedimiento almacenado sin parámetros
+    y muestra los resultados en texto_resultados.
+    """
     try:
-        cursor.execute(sql)
-        registros = cursor.fetchall()
         texto_resultados.delete("1.0", tk.END)
-        for fila in registros:
-            texto_resultados.insert(tk.END, str(fila) + "\n")
+
+        # Ejecutar procedimiento
+        cursor.callproc(proc_nombre)
+
+        # Iterar todos los resultados del procedimiento
+        for result in cursor.stored_results():
+            registros = result.fetchall()
+            for fila in registros:
+                texto_resultados.insert(tk.END, str(fila) + "\n")
+
+        # Limpiar resultados pendientes
+        while cursor.nextset():
+            pass
+
     except Exception as e:
-        messagebox.showerror("Error", f"No se pudo obtener datos:\n{e}")
+        messagebox.showerror("Error", f"No se pudo ejecutar el procedimiento:\n{e}")
 
 # --------------------------
 # CRUDS
@@ -51,13 +65,14 @@ def ejecutar_consulta(sql):
 def insertar_conductor():
     try:
         nombre = entry_nombre_conductor.get()
-        if not (nombre, ):
+        if not nombre.strip():  # Validación más robusta
             messagebox.showwarning("Campos vacíos", "Complete todos los campos.")
             return
 
-        sql = "INSERT INTO Conductor (nombre_conductor) VALUES (%s)"
-        cursor.execute(sql, (nombre, ))
+        # Llamar al procedimiento almacenado
+        cursor.callproc('insertar_conductor', (nombre,))
         conexion.commit()
+
         messagebox.showinfo("Éxito", "Conductor agregado correctamente.")
         entry_nombre_conductor.delete(0, tk.END)
     except Exception as e:
@@ -68,45 +83,85 @@ def insertar_conductor():
 
 def insertar_vehiculo():
     try:
-        placa = entry_placa.get()
-        marca = entry_marca.get()
-        tonelaje = entry_tonelaje.get()
-        id_conductor = entry_id_conductor.get()
-        id_modelo = entry_id_modelo.get()
-        centro_costos = entry_centro_costos.get()
+        placa = entry_placa.get().strip()
+        marca = entry_marca.get().strip()
+        tonelaje = entry_tonelaje.get().strip()
+        id_conductor = entry_id_conductor.get().strip()
+        id_modelo = entry_id_modelo_vehiculo.get().strip()
+        centro_costos = entry_centro_costos.get().strip()
 
-        if not (placa and id_conductor and id_modelo and marca and tonelaje and centro_costos):
+        # DEBUG
+        print("===== DEBUG CAMPOS =====")
+        print("placa:", repr(placa))
+        print("marca:", repr(marca))
+        print("tonelaje:", repr(tonelaje))
+        print("id_conductor:", repr(id_conductor))
+        print("id_modelo:", repr(id_modelo))
+        print("centro_costos:", repr(centro_costos))
+        print("========================")
+
+
+        # Validación correcta
+        campos = [placa, marca, tonelaje, id_conductor, id_modelo, centro_costos]
+        if any(c == "" for c in campos):
             messagebox.showwarning("Campos vacíos", "Complete todos los campos obligatorios.")
             return
 
-        sql = "INSERT INTO Vehiculo (placa, id_conductor, id_modelo, marca, tonelaje, centro_costos) VALUES (%s, %s, %s, %s, %s, %s)"
-        cursor.execute(sql, (placa, id_conductor, id_modelo, marca, tonelaje, centro_costos))
+        # Convertir a números
+        id_conductor = int(id_conductor)
+        id_modelo = int(id_modelo)
+        tonelaje = int(tonelaje)
+
+        # Llamar al procedimiento
+        cursor.callproc("insertar_vehiculo", (placa, id_conductor, id_modelo, marca, tonelaje, centro_costos))
         conexion.commit()
+
         messagebox.showinfo("Éxito", "Vehículo agregado correctamente.")
-        for e in [entry_placa, entry_id_conductor, entry_id_modelo, entry_marca, entry_tonelaje, entry_centro_costos]:
+
+        for e in [entry_placa, entry_marca, entry_tonelaje, entry_id_conductor, entry_id_modelo_vehiculo, entry_centro_costos]:
             e.delete(0, tk.END)
+
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo insertar:\n{e}")
+
 
 def insertar_ruta():
     try:
-        descripcion = entry_descripcion_ruta.get()
-        tipo = entry_tipo_ruta.get()
-        kilometraje = entry_kilometraje.get()
-        estado = entry_estado_ruta.get()
+        descripcion = entry_descripcion_ruta.get().strip()
+        tipo = entry_tipo_ruta.get().strip()
+        kilometraje = entry_kilometraje.get().strip()
+        estado = entry_estado_ruta.get().strip()
 
-        if not (kilometraje and tipo and descripcion and estado):
+        # Validación correcta
+        campos = [descripcion, tipo, kilometraje, estado]
+        if any(c == "" for c in campos):
             messagebox.showwarning("Campos vacíos", "Complete todos los campos obligatorios.")
             return
 
-        sql = "INSERT INTO Ruta (kilometraje, tipo_ruta, descripcion, estado_ruta) VALUES (%s, %s, %s, %s)"
-        cursor.execute(sql, (kilometraje, tipo, descripcion, estado))
+        # Validación de números
+        try:
+            kilometraje = int(kilometraje)
+            estado = int(estado)
+        except ValueError:
+            messagebox.showerror("Error", "Kilometraje y Estado deben ser números enteros.")
+            return
+
+        # Llamada al procedimiento almacenado
+        cursor.callproc(
+            'insertar_ruta',
+            (kilometraje, tipo, descripcion, estado)
+        )
         conexion.commit()
+
         messagebox.showinfo("Éxito", "Ruta agregada correctamente.")
+
+        # Limpiar campos
         for e in [entry_kilometraje, entry_tipo_ruta, entry_descripcion_ruta, entry_estado_ruta]:
             e.delete(0, tk.END)
+
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo insertar:\n{e}")
+
 
 def insertar_modelo():
     try:
@@ -117,9 +172,8 @@ def insertar_modelo():
             messagebox.showwarning("Campos vacíos", "Ingrese una descripción válida.")
             return
 
-        # Consulta SQL
-        sql = "INSERT INTO Modelo (modelo_descripcion) VALUES (%s)"
-        cursor.execute(sql, (descripcion_modelo,))
+        # Llamar al procedimiento almacenado
+        cursor.callproc("insertar_modelo", (descripcion_modelo,))
         conexion.commit()
 
         messagebox.showinfo("Éxito", "Modelo agregado correctamente.")
@@ -127,6 +181,7 @@ def insertar_modelo():
 
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo insertar el modelo:\n{e}")
+
 
 
 def insertar_detalle():
@@ -144,19 +199,18 @@ def insertar_detalle():
             messagebox.showwarning("Valor inválido", "ID Ruta y ID Modelo deben ser números enteros.")
             return
 
-        # Validar decimal
+        # Validación del consumo (decimal)
         try:
             consumo_val = float(consumo)
         except ValueError:
             messagebox.showwarning("Valor inválido", "El consumo debe ser un número decimal válido.")
             return
 
-        # Consulta SQL
-        sql = """
-            INSERT INTO Detalle (id_ruta, id_modelo, consumo_por_modelo)
-            VALUES (%s, %s, %s)
-        """
-        cursor.execute(sql, (int(ruta), int(modelo), consumo_val))
+        # Llamar al procedimiento almacenado
+        cursor.callproc(
+            "insertar_detalle",
+            (int(ruta), int(modelo), float(consumo_val))
+        )
         conexion.commit()
 
         messagebox.showinfo("Éxito", "Detalle agregado correctamente.")
@@ -175,74 +229,86 @@ def insertar_detalle():
 #READ: Consultas
 
 def consulta_vehiculos_con_conductor():
-    ejecutar_consulta("SELECT v.placa, v.marca, v.tonelaje, c.nombre_conductor FROM Vehiculo v INNER JOIN Conductor c ON v.id_conductor = c.id_conductor;")
+    ejecutar_procedimiento("consulta1_vehiculos_con_conductor")
 
 def consulta_rutas_activas():
-    ejecutar_consulta("SELECT id_ruta, descripcion, tipo_ruta, kilometraje FROM Ruta WHERE estado_ruta = 1;")
+    ejecutar_procedimiento("consulta2_rutas_activas")
 
 def consulta_detalles_rutas():
-    ejecutar_consulta("SELECT r.descripcion, COUNT(d.id_detalle) AS cantidad_detalles FROM Ruta r LEFT JOIN Detalle d ON r.id_ruta = d.id_ruta GROUP BY r.id_ruta, r.descripcion;")
+    ejecutar_procedimiento("consulta3_rutas_detalles")
 
 def consulta_top_rendimiento():
-    ejecutar_consulta("SELECT r.descripcion, r.kilometraje, ROUND(AVG(d.consumo_por_modelo), 2) AS consumo_promedio, ROUND(r.kilometraje / AVG(d.consumo_por_modelo), 2) AS rendimiento FROM Ruta r INNER JOIN Detalle d ON r.id_ruta = d.id_ruta GROUP BY r.id_ruta, r.descripcion, r.kilometraje ORDER BY rendimiento DESC LIMIT 3;")
+    ejecutar_procedimiento("consulta4_top_rendimiento")
 
 def consulta_vehiculos_modelo():
-    ejecutar_consulta("SELECT v.placa, v.marca, m.modelo_descripcion, v.centro_costos FROM Vehiculo v INNER JOIN Modelo m ON v.id_modelo = m.id_modelo;")
+    ejecutar_procedimiento("consulta5_vehiculos_modelo")
 
 def consulta_modelos_usados():
-    ejecutar_consulta("SELECT m.modelo_descripcion, COUNT(v.placa) AS cantidad_vehiculos FROM Modelo m LEFT JOIN Vehiculo v ON m.id_modelo = v.id_modelo GROUP BY m.id_modelo, m.modelo_descripcion ORDER BY cantidad_vehiculos DESC;")
+    ejecutar_procedimiento("consulta6_modelos_usados")
 
 def consulta_consumo_promedio():
-    ejecutar_consulta("SELECT m.modelo_descripcion, ROUND(AVG(d.consumo_por_modelo), 2) AS consumo_promedio FROM Modelo m INNER JOIN Detalle d ON m.id_modelo = d.id_modelo GROUP BY m.id_modelo, m.modelo_descripcion ORDER BY consumo_promedio ASC;")
+    ejecutar_procedimiento("consulta7_consumo_promedio_modelo")
 
 def consulta_vehiculos_pesados():
-    ejecutar_consulta("SELECT placa, marca, tonelaje, centro_costos FROM Vehiculo WHERE tonelaje > 8;")
+    ejecutar_procedimiento("consulta8_vehiculos_tonelaje")
 
 def consulta_rutas_tipo():
-    ejecutar_consulta("SELECT tipo_ruta, COUNT(*) AS cantidad_rutas FROM Ruta GROUP BY tipo_ruta;")
+    ejecutar_procedimiento("consulta9_rutas_tipo")
 
 def consulta_rutas_inactivas():
-    ejecutar_consulta("SELECT id_ruta, descripcion, tipo_ruta, kilometraje FROM Ruta WHERE estado_ruta = 0;")
+    ejecutar_procedimiento("consulta10_rutas_inactivas")
 
-def consulta_vehiculos_por_modelo():
-    ejecutar_consulta("SELECT v.id_modelo, COUNT(*) AS cantidad FROM Vehiculo v GROUP BY v.id_modelo;")
-
-def consulta_modelo_especifico():
-    ejecutar_consulta("SELECT * FROM Modelo WHERE id_modelo = 10;")
-
-#Consultas de todas las tablas
+# Consultas de todas las tablas
 def consulta_ruta():
-    ejecutar_consulta("SELECT * FROM  ruta;")
+    ejecutar_procedimiento("mostrar_todas_rutas")
 
 def consulta_vehiculo():
-    ejecutar_consulta("SELECT * FROM  vehiculo;")
+    ejecutar_procedimiento("mostrar_todos_vehiculos")
 
 def consulta_conductor():
-    ejecutar_consulta("SELECT * FROM  conductor;")
+    ejecutar_procedimiento("mostrar_todos_conductores")
 
 def consulta_modelo():
-    ejecutar_consulta("SELECT * FROM  modelo;")
+    ejecutar_procedimiento("mostrar_todos_modelos")
 
 def consulta_detalle():
-    ejecutar_consulta("SELECT * FROM  detalle;")
+    ejecutar_procedimiento("mostrar_todos_detalles")
+
 
 #UPDATE
 #Actualizar Conductor
 def actualizar_conductor():
-    conectar_bd()
+    conectar_bd()  
 
-    id_conductor = entry_id_conductor_act.get()
-    nuevo_nombre = entry_nombre_conductor_act.get()
+    id_conductor = entry_id_conductor_act.get().strip()
+    nuevo_nombre = entry_nombre_conductor_act.get().strip()
+
+    if not id_conductor or not nuevo_nombre:
+        messagebox.showwarning("Campos vacíos", "Complete todos los campos.")
+        return
+
+    if not id_conductor.isdigit():
+        messagebox.showwarning("Valor inválido", "El ID del conductor debe ser un número entero.")
+        return
 
     try:
-        sql = "UPDATE Conductor SET nombre_conductor=%s WHERE id_conductor=%s"
-        cursor.execute(sql, (nuevo_nombre, id_conductor))
+        # Llamar al procedimiento almacenado
+        cursor.callproc("actualizar_conductor", (int(id_conductor), nuevo_nombre))
         conexion.commit()
 
+        # Verificar si se actualizó algún registro
         if cursor.rowcount > 0:
             messagebox.showinfo("Actualizar", "Conductor actualizado correctamente")
         else:
             messagebox.showwarning("Actualizar", "No existe un conductor con ese ID")
+
+        # Limpiar campos
+        entry_id_conductor_act.delete(0, tk.END)
+        entry_nombre_conductor_act.delete(0, tk.END)
+
+        # Limpiar resultados pendientes (muy importante)
+        while cursor.nextset():
+            pass
 
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo actualizar:\n{e}")
@@ -251,25 +317,47 @@ def actualizar_conductor():
 
 #Actualizar Ruta
 def actualizar_ruta():
-    conectar_bd()
+    conectar_bd()  
 
-    id_ruta = entry_id_ruta_act.get()
-    nuevo_km = entry_km_ruta_act.get()
-    nuevo_tipo = entry_tipo_ruta_act.get()
-    nueva_desc = entry_desc_ruta_act.get()
-    nuevo_estado = entry_estado_ruta_act.get()
+    id_ruta = entry_id_ruta_act.get().strip()
+    nuevo_km = entry_km_ruta_act.get().strip()
+    nuevo_tipo = entry_tipo_ruta_act.get().strip()
+    nueva_desc = entry_desc_ruta_act.get().strip()
+    nuevo_estado = entry_estado_ruta_act.get().strip()
+
+    # Validaciones básicas
+    if not (id_ruta and nuevo_km and nuevo_tipo and nueva_desc and nuevo_estado):
+        messagebox.showwarning("Campos vacíos", "Complete todos los campos.")
+        return
+
+    if not id_ruta.isdigit() or not nuevo_km.isdigit() or not nuevo_estado.isdigit():
+        messagebox.showwarning("Valor inválido", "ID, kilometraje y estado deben ser números enteros.")
+        return
 
     try:
-        sql = """UPDATE Ruta 
-                 SET kilometraje=%s, tipo_ruta=%s, descripcion=%s, estado_ruta=%s
-                 WHERE id_ruta=%s"""
-        cursor.execute(sql, (nuevo_km, nuevo_tipo, nueva_desc, nuevo_estado, id_ruta))
+        # Llamar al procedimiento almacenado
+        cursor.callproc(
+            "actualizar_ruta",
+            (int(id_ruta), int(nuevo_km), nuevo_tipo, nueva_desc, int(nuevo_estado))
+        )
         conexion.commit()
 
+        # Verificar si se actualizó algún registro
         if cursor.rowcount > 0:
             messagebox.showinfo("Actualizar", "Ruta actualizada correctamente")
         else:
             messagebox.showwarning("Actualizar", "No existe una ruta con ese ID")
+
+        # Limpiar campos
+        entry_id_ruta_act.delete(0, tk.END)
+        entry_km_ruta_act.delete(0, tk.END)
+        entry_tipo_ruta_act.delete(0, tk.END)
+        entry_desc_ruta_act.delete(0, tk.END)
+        entry_estado_ruta_act.delete(0, tk.END)
+
+        # Limpiar resultados pendientes
+        while cursor.nextset():
+            pass
 
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo actualizar:\n{e}")
@@ -279,26 +367,49 @@ def actualizar_ruta():
 
 #Actualizar Vehículo
 def actualizar_vehiculo():
-    conectar_bd()
+    conectar_bd()  
 
-    placa = entry_placa_act.get()
-    marca = entry_marca_act.get()
-    tonelaje = entry_tonelaje_act.get()
-    id_conductor = entry_conductor_act.get()
-    id_modelo = entry_modelo_act.get()
-    centro_costos = entry_cc_act.get()
+    placa = entry_placa_act.get().strip()
+    marca = entry_marca_act.get().strip()
+    tonelaje = entry_tonelaje_act.get().strip()
+    id_conductor = entry_conductor_act.get().strip()
+    id_modelo = entry_modelo_act.get().strip()
+    centro_costos = entry_cc_act.get().strip()
+
+    # Validaciones básicas
+    if not (placa and marca and tonelaje and id_conductor and id_modelo and centro_costos):
+        messagebox.showwarning("Campos vacíos", "Complete todos los campos.")
+        return
+
+    if not id_conductor.isdigit() or not id_modelo.isdigit() or not tonelaje.isdigit():
+        messagebox.showwarning("Valor inválido", "Conductor, modelo y tonelaje deben ser números enteros.")
+        return
 
     try:
-        sql = """UPDATE Vehiculo 
-                 SET marca=%s, tonelaje=%s, id_conductor=%s, id_modelo=%s, centro_costos=%s
-                 WHERE placa=%s"""
-        cursor.execute(sql, (marca, tonelaje, id_conductor, id_modelo, centro_costos, placa))
+        # Llamar al procedimiento almacenado
+        cursor.callproc(
+            "actualizar_vehiculo",
+            (placa, int(id_conductor), int(id_modelo), marca, int(tonelaje), centro_costos)
+        )
         conexion.commit()
 
+        # Verificar si se actualizó algún registro
         if cursor.rowcount > 0:
             messagebox.showinfo("Actualizar", "Vehículo actualizado correctamente")
         else:
             messagebox.showwarning("Actualizar", "No existe un vehículo con esa placa")
+
+        # Limpiar campos
+        entry_placa_act.delete(0, tk.END)
+        entry_marca_act.delete(0, tk.END)
+        entry_tonelaje_act.delete(0, tk.END)
+        entry_conductor_act.delete(0, tk.END)
+        entry_modelo_act.delete(0, tk.END)
+        entry_cc_act.delete(0, tk.END)
+
+        # Limpiar resultados pendientes
+        while cursor.nextset():
+            pass
 
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo actualizar:\n{e}")
@@ -307,20 +418,38 @@ def actualizar_vehiculo():
 
 #Actualizar Modelo
 def actualizar_modelo():
-    conectar_bd()
+    conectar_bd()  
 
-    id_modelo = entry_id_modelo_act.get()
-    nuevo_desc = entry_desc_modelo_act.get()
+    id_modelo = entry_id_modelo_act.get().strip()
+    nuevo_desc = entry_desc_modelo_act.get().strip()
+
+    # Validaciones básicas
+    if not id_modelo or not nuevo_desc:
+        messagebox.showwarning("Campos vacíos", "Complete todos los campos.")
+        return
+
+    if not id_modelo.isdigit():
+        messagebox.showwarning("Valor inválido", "El ID del modelo debe ser un número entero.")
+        return
 
     try:
-        sql = "UPDATE Modelo SET modelo_descripcion=%s WHERE id_modelo=%s"
-        cursor.execute(sql, (nuevo_desc, id_modelo))
+        # Llamar al procedimiento almacenado
+        cursor.callproc("actualizar_modelo", (int(id_modelo), nuevo_desc))
         conexion.commit()
 
+        # Verificar si se actualizó algún registro
         if cursor.rowcount > 0:
             messagebox.showinfo("Actualizar", "Modelo actualizado correctamente")
         else:
             messagebox.showwarning("Actualizar", "No existe un modelo con ese ID")
+
+        # Limpiar campos
+        entry_id_modelo_act.delete(0, tk.END)
+        entry_desc_modelo_act.delete(0, tk.END)
+
+        # Limpiar resultados pendientes
+        while cursor.nextset():
+            pass
 
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo actualizar:\n{e}")
@@ -329,24 +458,49 @@ def actualizar_modelo():
 
 #Actualizar Detalle
 def actualizar_detalle():
-    conectar_bd()
+    conectar_bd()  
 
-    id_detalle = entry_id_detalle_act.get()
-    id_ruta = entry_id_ruta_det_act.get()
-    id_modelo = entry_id_modelo_det_act.get()
-    consumo = entry_consumo_det_act.get()
+    id_detalle = entry_id_detalle_act.get().strip()
+    id_ruta = entry_id_ruta_det_act.get().strip()
+    id_modelo = entry_id_modelo_det_act.get().strip()
+    consumo = entry_consumo_det_act.get().strip()
+
+    # Validaciones básicas
+    if not (id_detalle and id_ruta and id_modelo and consumo):
+        messagebox.showwarning("Campos vacíos", "Complete todos los campos.")
+        return
+
+    if not (id_detalle.isdigit() and id_ruta.isdigit() and id_modelo.isdigit()):
+        messagebox.showwarning("Valor inválido", "IDs de detalle, ruta y modelo deben ser números enteros.")
+        return
+
+    # Validar que consumo sea un número decimal
+    try:
+        consumo_val = float(consumo)
+    except ValueError:
+        messagebox.showwarning("Valor inválido", "El consumo debe ser un número decimal válido.")
+        return
 
     try:
-        sql = """UPDATE Detalle 
-                 SET id_ruta=%s, id_modelo=%s, consumo_por_modelo=%s
-                 WHERE id_detalle=%s"""
-        cursor.execute(sql, (id_ruta, id_modelo, consumo, id_detalle))
+        # Llamar al procedimiento almacenado
+        cursor.callproc("actualizar_detalle", (int(id_detalle), int(id_ruta), int(id_modelo), consumo_val))
         conexion.commit()
 
+        # Verificar si se actualizó algún registro
         if cursor.rowcount > 0:
             messagebox.showinfo("Actualizar", "Detalle actualizado correctamente")
         else:
             messagebox.showwarning("Actualizar", "No existe un detalle con ese ID")
+
+        # Limpiar campos
+        entry_id_detalle_act.delete(0, tk.END)
+        entry_id_ruta_det_act.delete(0, tk.END)
+        entry_id_modelo_det_act.delete(0, tk.END)
+        entry_consumo_det_act.delete(0, tk.END)
+
+        # Limpiar resultados pendientes
+        while cursor.nextset():
+            pass
 
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo actualizar:\n{e}")
@@ -495,7 +649,7 @@ footer = tk.Label(
     ventana,
     text="FEMACO © 2025  •  Sistema de Gestión de Rutas y Bases de Datos",
     bg="#f5f3ed",
-    fg="#8b7e6b",
+    fg="#000000",
     font=("Segoe UI", 8)
 )
 footer.pack(side="bottom", pady=1)
@@ -551,9 +705,7 @@ consultas = [
     ("⛽ Consumo promedio por modelo", consulta_consumo_promedio),
     ("🚛 Vehículos pesados", consulta_vehiculos_pesados),
     ("🗂️ Rutas por tipo", consulta_rutas_tipo),
-    ("⛔ Rutas inactivas", consulta_rutas_inactivas),
-    ("🚙 Vehículos por modelo", consulta_vehiculos_por_modelo),
-    ("🔍 Buscar modelo específico", consulta_modelo_especifico)
+    ("⛔ Rutas inactivas", consulta_rutas_inactivas)
 ]
 
 for texto, func in consultas:
@@ -717,7 +869,7 @@ entry_placa = entries["placa"]
 entry_marca = entries["marca"]
 entry_tonelaje = entries["tonelaje"]
 entry_id_conductor = entries["id_conductor"]
-entry_id_modelo = entries["id_modelo"]
+entry_id_modelo_vehiculo = entries["id_modelo"]
 entry_centro_costos = entries["centro_costos"]
 
 tk.Button(
