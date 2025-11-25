@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import mysql.connector
 from mysql.connector import Error
+from tkinter import ttk
 
 # --------------------------
 # CONEXIÓN A LA BASE DE DATOS
@@ -35,23 +36,35 @@ def cerrar_conexion():
 # FUNCIÓN GENERAL PARA CONSULTAS
 # --------------------------
 def ejecutar_procedimiento(proc_nombre):
-    """
-    Ejecuta un procedimiento almacenado sin parámetros
-    y muestra los resultados en texto_resultados.
-    """
-    try:
-        texto_resultados.delete("1.0", tk.END)
+    global tabla
 
+    try:
         # Ejecutar procedimiento
         cursor.callproc(proc_nombre)
 
-        # Iterar todos los resultados del procedimiento
+        # Obtener resultados
         for result in cursor.stored_results():
             registros = result.fetchall()
-            for fila in registros:
-                texto_resultados.insert(tk.END, str(fila) + "\n")
+            columnas = result.column_names
 
-        # Limpiar resultados pendientes
+            # Si existía una tabla antes, eliminarla
+            if tabla:
+                tabla.destroy()
+
+            # Crear tabla
+            tabla = ttk.Treeview(marco_tabla, columns=columnas, show="headings")
+            tabla.pack(fill="both", expand=True)
+
+            # Encabezados
+            for col in columnas:
+                tabla.heading(col, text=col)
+                tabla.column(col, width=150, anchor="center")
+
+            # Insertar filas
+            for fila in registros:
+                tabla.insert("", "end", values=fila)
+
+        # Limpiar posibles sets pendientes
         while cursor.nextset():
             pass
 
@@ -577,7 +590,7 @@ def eliminar_vehiculo():
 #     INTERFAZ GRÁFICA
 # ============================
 ventana = tk.Tk()
-ventana.title("FEMACO • Administrador de Base de Datos")
+ventana.title("Administrador de Base de Datos")
 ventana.state("zoomed")
 ventana.config(bg="#f5f3ed")  # Fondo suave y limpio
 
@@ -647,7 +660,7 @@ tk.Button(
 # =======================================
 footer = tk.Label(
     ventana,
-    text="FEMACO © 2025  •  Sistema de Gestión de Rutas y Bases de Datos",
+    text="2025  •  Sistema de Gestión de Rutas y Bases de Datos",
     bg="#f5f3ed",
     fg="#000000",
     font=("Segoe UI", 8)
@@ -744,23 +757,11 @@ titulo_resultados = tk.Label(
 )
 titulo_resultados.pack(fill="x", pady=10)
 
-# Marco con borde elegante
-marco_texto = tk.Frame(contenedor_resultados, bg="#fff", bd=2, relief="groove")
-marco_texto.pack(fill="both", expand=True)
+# Contenedor donde se mostrará la tabla
+marco_tabla = tk.Frame(contenedor_resultados, bg="#fff", bd=2, relief="groove")
+marco_tabla.pack(fill="both", expand=True)
 
-scroll = tk.Scrollbar(marco_texto)
-scroll.pack(side="right", fill="y")
-
-texto_resultados = tk.Text(
-    marco_texto,
-    wrap="none",
-    yscrollcommand=scroll.set,
-    font=("Consolas", 12),
-    bg="#fafafa",
-    fg="#333"
-)
-texto_resultados.pack(fill="both", expand=True)
-scroll.config(command=texto_resultados.yview)
+tabla = None  # referencia global para reconstruir tablas
 
 # =======================================
 #          PESTAÑA DE INSERCIÓN
