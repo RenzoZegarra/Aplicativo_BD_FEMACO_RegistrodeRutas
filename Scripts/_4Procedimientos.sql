@@ -631,3 +631,17 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+
+DELIMITER $$
+
+CREATE PROCEDURE buscar_conductor(IN nombre_buscar VARCHAR(100))
+BEGIN
+    SELECT COUNT(*) AS total
+    FROM conductor
+    WHERE nombre_conductor = nombre_buscar;
+END $$
+
+DELIMITER ;
+
+

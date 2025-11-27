@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import mysql.connector
 from mysql.connector import Error
-
+from tkinter import ttk
 # --------------------------
 # CONEXIÓN A LA BASE DE DATOS
 # --------------------------
@@ -31,54 +31,187 @@ def cerrar_conexion():
     except:
         pass
 
+
+from tkinter import ttk
+
+def aplicar_estilos_tabla():
+
+    style = ttk.Style()
+
+    # Tema moderno
+    style.theme_use("clam")
+
+    # Estilo para el Treeview
+    style.configure(
+        "Custom.Treeview",
+        background="#F8F9FA",
+        foreground="black",
+        rowheight=28,
+        fieldbackground="#F8F9FA",
+        font=("Segoe UI", 10)
+    )
+
+    # Encabezados modernos
+    style.configure(
+        "Custom.Treeview.Heading",
+        background="#2E86C1",
+        foreground="white",
+        relief="flat",
+        font=("Segoe UI Semibold", 11),
+        padding=6
+    )
+
+    # Efecto hover en encabezado
+    style.map(
+        "Custom.Treeview.Heading",
+        background=[("active", "#1B4F72")]
+    )
+
+    # Filas seleccionadas
+    style.map(
+        "Custom.Treeview",
+        background=[("selected", "#AED6F1")],
+        foreground=[("selected", "black")]
+    )
+
+
 # --------------------------
 # FUNCIÓN GENERAL PARA CONSULTAS
 # --------------------------
-def ejecutar_procedimiento(proc_nombre):
-    """
-    Ejecuta un procedimiento almacenado sin parámetros
-    y muestra los resultados en texto_resultados.
-    """
-    try:
-        texto_resultados.delete("1.0", tk.END)
 
-        # Ejecutar procedimiento
+def ejecutar_procedimiento(proc_nombre):
+    global tabla, entrada_busqueda
+
+    try:
         cursor.callproc(proc_nombre)
 
-        # Iterar todos los resultados del procedimiento
         for result in cursor.stored_results():
             registros = result.fetchall()
-            for fila in registros:
-                texto_resultados.insert(tk.END, str(fila) + "\n")
+            columnas = result.column_names
 
-        # Limpiar resultados pendientes
+            # Limpiar el marco
+            for widget in marco_tabla.winfo_children():
+                widget.destroy()
+
+            aplicar_estilos_tabla()   # <<< aplicar el estilo moderno
+
+            # -----------------------
+            # BUSCADOR
+            # -----------------------
+            frame_busqueda = tk.Frame(marco_tabla)
+            frame_busqueda.pack(fill="x", pady=5)
+
+            tk.Label(frame_busqueda, text="Buscar:", font=("Segoe UI", 10)).pack(side="left")
+
+            entrada_busqueda = tk.Entry(frame_busqueda, font=("Segoe UI", 10))
+            entrada_busqueda.pack(side="left", fill="x", expand=True, padx=5)
+
+            def buscar():
+                consulta = entrada_busqueda.get().lower()
+                for item in tabla.get_children():
+                    tabla.delete(item)
+
+                for fila in registros:
+                    if any(consulta in str(campo).lower() for campo in fila):
+                        tabla.insert("", "end", values=fila)
+
+            tk.Button(frame_busqueda, text="Buscar", command=buscar).pack(side="left", padx=5)
+
+            # -----------------------
+            # TABLA
+            # -----------------------
+            tabla = ttk.Treeview(
+                marco_tabla,
+                columns=columnas,
+                show="headings",
+                style="Custom.Treeview"
+            )
+            tabla.pack(fill="both", expand=True)
+
+            # Encabezados con orden
+            def ordenar(col, descendente):
+                datos = [(tabla.set(k, col), k) for k in tabla.get_children("")]
+
+                try:
+                    datos.sort(key=lambda t: float(t[0]), reverse=descendente)
+                except:
+                    datos.sort(key=lambda t: t[0], reverse=descendente)
+
+                for index, (_, k) in enumerate(datos):
+                    tabla.move(k, "", index)
+
+                tabla.heading(col, command=lambda: ordenar(col, not descendente))
+
+            for col in columnas:
+                tabla.heading(col, text=col, command=lambda c=col: ordenar(c, False))
+                tabla.column(col, width=150, anchor="center")
+
+            # Filas alternadas tipo zebra
+            for i, fila in enumerate(registros):
+                if i % 2 == 0:
+                    tabla.insert("", "end", values=fila, tags=("par",))
+                else:
+                    tabla.insert("", "end", values=fila, tags=("impar",))
+
+            tabla.tag_configure("par", background="#FFFFFF")
+            tabla.tag_configure("impar", background="#F2F4F4")
+
         while cursor.nextset():
             pass
 
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo ejecutar el procedimiento:\n{e}")
 
+
 # --------------------------
 # CRUDS
 # --------------------------
 # CREATE: Inserciones
+
+
 def insertar_conductor():
     try:
-        nombre = entry_nombre_conductor.get()
-        if not nombre.strip():  # Validación más robusta
+        nombre = entry_nombre_conductor.get().strip()
+
+        if not nombre:
             messagebox.showwarning("Campos vacíos", "Complete todos los campos.")
             return
 
-        # Llamar al procedimiento almacenado
-        cursor.callproc('insertar_conductor', (nombre,))
+        # ----------------------------------------
+        # 1. Verificar si ya existe el conductor
+        # ----------------------------------------
+        cursor.callproc("buscar_conductor", (nombre,))
+        existe = None
+
+        for result in cursor.stored_results():
+            existe = result.fetchone()[0]  # devuelve el COUNT(*)
+
+        if existe is None:
+            messagebox.showerror("Error", "No se pudo verificar la existencia del conductor.")
+            return
+
+        # ----------------------------------------
+        # 2. Si existe, pedir confirmación
+        # ----------------------------------------
+        if existe > 0:
+            resp = messagebox.askyesno(
+                "Conductor existente",
+                f"El conductor '{nombre}' ya existe.\n\n¿Desea agregarlo de todas formas?"
+            )
+            if not resp:
+                return  # cancelar inserción
+
+        # ----------------------------------------
+        # 3. Insertar
+        # ----------------------------------------
+        cursor.callproc("insertar_conductor", (nombre,))
         conexion.commit()
 
         messagebox.showinfo("Éxito", "Conductor agregado correctamente.")
         entry_nombre_conductor.delete(0, tk.END)
+
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo insertar:\n{e}")
-
-
 
 
 def insertar_vehiculo():
@@ -90,39 +223,38 @@ def insertar_vehiculo():
         id_modelo = entry_id_modelo_vehiculo.get().strip()
         centro_costos = entry_centro_costos.get().strip()
 
-        # DEBUG
-        print("===== DEBUG CAMPOS =====")
-        print("placa:", repr(placa))
-        print("marca:", repr(marca))
-        print("tonelaje:", repr(tonelaje))
-        print("id_conductor:", repr(id_conductor))
-        print("id_modelo:", repr(id_modelo))
-        print("centro_costos:", repr(centro_costos))
-        print("========================")
-
-
-        # Validación correcta
+        # Validación de campos vacíos
         campos = [placa, marca, tonelaje, id_conductor, id_modelo, centro_costos]
         if any(c == "" for c in campos):
             messagebox.showwarning("Campos vacíos", "Complete todos los campos obligatorios.")
             return
 
-        # Convertir a números
+        # Validar duplicado antes de insertar
+        cursor.execute("SELECT COUNT(*) FROM Vehiculo WHERE placa = %s", (placa,))
+        existe = cursor.fetchone()[0]
+
+        if existe > 0:
+            messagebox.showerror("Duplicado", "La placa ingresada ya existe en el sistema.")
+            return
+
+        # Convertir números
         id_conductor = int(id_conductor)
         id_modelo = int(id_modelo)
         tonelaje = int(tonelaje)
 
-        # Llamar al procedimiento
+        # Inserción mediante procedimiento
         cursor.callproc("insertar_vehiculo", (placa, id_conductor, id_modelo, marca, tonelaje, centro_costos))
         conexion.commit()
 
         messagebox.showinfo("Éxito", "Vehículo agregado correctamente.")
 
+        # Limpiar campos
         for e in [entry_placa, entry_marca, entry_tonelaje, entry_id_conductor, entry_id_modelo_vehiculo, entry_centro_costos]:
             e.delete(0, tk.END)
 
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo insertar:\n{e}")
+
 
 
 def insertar_ruta():
@@ -132,7 +264,7 @@ def insertar_ruta():
         kilometraje = entry_kilometraje.get().strip()
         estado = entry_estado_ruta.get().strip()
 
-        # Validación correcta
+        # Validación básica
         campos = [descripcion, tipo, kilometraje, estado]
         if any(c == "" for c in campos):
             messagebox.showwarning("Campos vacíos", "Complete todos los campos obligatorios.")
@@ -146,7 +278,22 @@ def insertar_ruta():
             messagebox.showerror("Error", "Kilometraje y Estado deben ser números enteros.")
             return
 
-        # Llamada al procedimiento almacenado
+        # ---------- VALIDACIÓN DE DUPLICADOS ----------
+        cursor.execute(
+            "SELECT COUNT(*) FROM Ruta WHERE descripcion = %s",
+            (descripcion,)
+        )
+        existe = cursor.fetchone()[0]
+
+        if existe > 0:
+            messagebox.showerror(
+                "Duplicado",
+                "La descripción de la ruta ya existe en el sistema."
+            )
+            return
+        # ----------------------------------------------
+
+        # Insertar usando el procedimiento almacenado
         cursor.callproc(
             'insertar_ruta',
             (kilometraje, tipo, descripcion, estado)
@@ -156,7 +303,12 @@ def insertar_ruta():
         messagebox.showinfo("Éxito", "Ruta agregada correctamente.")
 
         # Limpiar campos
-        for e in [entry_kilometraje, entry_tipo_ruta, entry_descripcion_ruta, entry_estado_ruta]:
+        for e in [
+            entry_kilometraje,
+            entry_tipo_ruta,
+            entry_descripcion_ruta,
+            entry_estado_ruta
+        ]:
             e.delete(0, tk.END)
 
     except Exception as e:
@@ -167,12 +319,27 @@ def insertar_modelo():
     try:
         descripcion_modelo = entry_modelo_descripcion.get().strip()
 
-        # Validación
+        # Validación básica
         if not descripcion_modelo:
             messagebox.showwarning("Campos vacíos", "Ingrese una descripción válida.")
             return
 
-        # Llamar al procedimiento almacenado
+        # ---------- VALIDACIÓN DE DUPLICADOS ----------
+        cursor.execute(
+            "SELECT COUNT(*) FROM Modelo WHERE modelo_descripcion = %s",
+            (descripcion_modelo,)
+        )
+        existe = cursor.fetchone()[0]
+
+        if existe > 0:
+            messagebox.showerror(
+                "Duplicado",
+                "La descripción del modelo ya existe en el sistema."
+            )
+            return
+        # ----------------------------------------------
+
+        # Insertar usando el procedimiento almacenado
         cursor.callproc("insertar_modelo", (descripcion_modelo,))
         conexion.commit()
 
@@ -183,14 +350,13 @@ def insertar_modelo():
         messagebox.showerror("Error", f"No se pudo insertar el modelo:\n{e}")
 
 
-
 def insertar_detalle():
     try:
         ruta = entry_id_ruta.get().strip()
         modelo = entry_id_modelo.get().strip()
         consumo = entry_consumo_por_modelo.get().strip()
 
-        # Validaciones
+        # Validaciones básicas
         if not ruta or not modelo or not consumo:
             messagebox.showwarning("Campos vacíos", "Complete todos los campos.")
             return
@@ -199,12 +365,27 @@ def insertar_detalle():
             messagebox.showwarning("Valor inválido", "ID Ruta y ID Modelo deben ser números enteros.")
             return
 
-        # Validación del consumo (decimal)
+        # Validación del consumo decimal
         try:
             consumo_val = float(consumo)
         except ValueError:
             messagebox.showwarning("Valor inválido", "El consumo debe ser un número decimal válido.")
             return
+
+        # ---------- VALIDACIÓN DE DUPLICADOS ----------
+        cursor.execute(
+            "SELECT COUNT(*) FROM Detalle WHERE id_ruta = %s AND id_modelo = %s",
+            (int(ruta), int(modelo))
+        )
+        existe = cursor.fetchone()[0]
+
+        if existe > 0:
+            messagebox.showerror(
+                "Duplicado",
+                "Ya existe un detalle registrado con ese ID Ruta y ID Modelo."
+            )
+            return
+        # ------------------------------------------------
 
         # Llamar al procedimiento almacenado
         cursor.callproc(
@@ -222,7 +403,6 @@ def insertar_detalle():
 
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo insertar el detalle:\n{e}")
-
 
 
 
@@ -577,7 +757,7 @@ def eliminar_vehiculo():
 #     INTERFAZ GRÁFICA
 # ============================
 ventana = tk.Tk()
-ventana.title("FEMACO • Administrador de Base de Datos")
+ventana.title("Administrador de Base de Datos")
 ventana.state("zoomed")
 ventana.config(bg="#f5f3ed")  # Fondo suave y limpio
 
@@ -647,7 +827,7 @@ tk.Button(
 # =======================================
 footer = tk.Label(
     ventana,
-    text="FEMACO © 2025  •  Sistema de Gestión de Rutas y Bases de Datos",
+    text="2025  •  Sistema de Gestión de Rutas y Bases de Datos",
     bg="#f5f3ed",
     fg="#000000",
     font=("Segoe UI", 8)
@@ -715,7 +895,6 @@ for texto, func in consultas:
 tk.Frame(menu_consultas, bg="#b09b6d", height=2).pack(fill="x", padx=10, pady=15)
 
 
-
 # =========================================================
 #              Panel derecho – Área de resultados
 # =========================================================
@@ -734,23 +913,11 @@ titulo_resultados = tk.Label(
 )
 titulo_resultados.pack(fill="x", pady=10)
 
-# Marco con borde elegante
-marco_texto = tk.Frame(contenedor_resultados, bg="#fff", bd=2, relief="groove")
-marco_texto.pack(fill="both", expand=True)
+# Contenedor donde se mostrará la tabla
+marco_tabla = tk.Frame(contenedor_resultados, bg="#fff", bd=2, relief="groove")
+marco_tabla.pack(fill="both", expand=True)
 
-scroll = tk.Scrollbar(marco_texto)
-scroll.pack(side="right", fill="y")
-
-texto_resultados = tk.Text(
-    marco_texto,
-    wrap="none",
-    yscrollcommand=scroll.set,
-    font=("Consolas", 12),
-    bg="#fafafa",
-    fg="#333"
-)
-texto_resultados.pack(fill="both", expand=True)
-scroll.config(command=texto_resultados.yview)
+tabla = None  # referencia global para reconstruir tablas
 
 # =======================================
 #          PESTAÑA DE INSERCIÓN
